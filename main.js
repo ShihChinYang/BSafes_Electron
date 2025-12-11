@@ -33,19 +33,85 @@ const setup = () => {
                 }
                 console.log('Connected to the BSafes SQlite database.');
                 global.sqliteDB = db;
+                let command;
                 db.serialize(() => {
-                    
+                    command = "CREATE TABLE IF NOT EXISTS itemKeys (" +
+                        "key TEXT PRIMARY KEY , downloaded INTEGER); ";
+                    db.run(command);
                 });
-                db.close();
             });
         });
     }
-
+    const setupDesktopAPIs = () => {
+        const getLastItemKey = async (event, itemList) => {
+            return new Promise((resolve, reject) => {
+                const db = global.sqliteDB;
+                console.log("getLastItemKey");
+                try {
+                    db.get('SELECT * FROM itemKeys ORDER BY key DESC', (err, row) => {
+                        if (err) {
+                            console.error(err.message);
+                            reject({ status: "error", error: err.message })
+                            return;
+                        }
+                        if (row) {
+                            resolve({ status: "ok", key: row.key })
+                        } else {
+                            resolve({ status: "ok" })
+                        }
+                    });
+                } catch (error) {
+                    resolve({ status: "error", error });
+                }
+            })
+        }
+        const addItemKeys = async (event, itemList) => {
+            return new Promise((resolve, reject) => {
+                const db = global.sqliteDB;
+                console.log("addItemKeys");
+                try {
+                    db.serialize(() => {
+                        for (let i = 0; i < itemList.numberOfItems; i++) {
+                            let command;
+                            let key = itemList.items[i];
+                            command = `SELECT * FROM itemKeys WHERE key="${key}"`
+                            db.get(command, (error, row) => {
+                                if (err) {
+                                    resolve({ status: "error", error });
+                                    return;
+                                }
+                                if (row) {
+                                    resolve({ status: "ok" });
+                                } else {
+                                    command = `INSERT INTO itemKeys (key, downloaded) VALUES ("${key}", 0);`
+                                    db.run(command, (error) => {
+                                        if (error) {
+                                            resolve({ status: "error", error });
+                                            return;
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                        db.each("SELECT * FROM itemKeys", (err, row) => {
+                            console.log(row.key + ": " + row.downloaded);
+                        });
+                    });
+                    resolve({ status: "ok" });
+                } catch (error) {
+                    resolve({ status: "error", error });
+                }
+            })
+        }
+        ipcMain.handle('ping', () => 'pong');
+        ipcMain.handle('getLastItemKey', getLastItemKey);
+        ipcMain.handle('addItemKeys', addItemKeys);
+    }
     setupDB();
+    setupDesktopAPIs()
 }
 
 app.whenReady().then(() => {
-    ipcMain.handle('ping', () => 'pong')
     createWindow();
     setup();
     app.on('activate', () => {
@@ -54,6 +120,8 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+    const db = global.sqliteDB;
+    db.close();
     /*if (process.platform !== 'darwin')*/ app.quit();
 })
 

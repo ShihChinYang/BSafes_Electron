@@ -5,5 +5,7 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   chrome: () => process.versions.chrome,
   electron: () => process.versions.electron,
   // we can also expose variables, not just functions
-  ping: () => ipcRenderer.invoke('ping')
+  ping: () => ipcRenderer.invoke('ping'),
+  getLastItemKey: () => ipcRenderer.invoke('getLastItemKey'),
+  addItemKeys: (itemList) => ipcRenderer.invoke('addItemKeys', itemList)
 })
