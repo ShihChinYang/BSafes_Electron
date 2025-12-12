@@ -2,7 +2,10 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 const sqlite3 = require('sqlite3').verbose();
 const path = require('node:path');
 const fs = require('fs')
+
+const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
 var databaseFile = 'BSafes.db';
+
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -34,68 +37,199 @@ const setup = () => {
                 console.log('Connected to the BSafes SQlite database.');
                 global.sqliteDB = db;
                 let command;
-                db.serialize(() => {
+                db.serialize(async() => {
+                    let response;
                     command = "CREATE TABLE IF NOT EXISTS itemKeys (" +
                         "key TEXT PRIMARY KEY , downloaded INTEGER); ";
-                    db.run(command);
+                    response = await dbRun(db, command);
+                    console.log("CREATE TABLE IF NOT EXISTS itemKeys: ", response);
+                    command = "CREATE TABLE IF NOT EXISTS itemVersions (" +
+                        "id TEXT, " +
+                        "version INTEGER, " +
+                        "accumulatedAttachments TEXT, " +
+                        "accumulatedGalleryImages TEXT, " +
+                        "accumulatedS3ObjectsInContent TEXT, " +
+                        "attachments TEXT, " +
+                        "audios TEXT, " +
+                        "container TEXT, " +
+                        "content TEXT, " +
+                        "contentSize INTEGER, " +
+                        "createdTime INTEGER, " +
+                        "dbSize INTEGER, " +
+                        "displayName TEXT, " +
+                        "envelopeIV TEXT, " +
+                        "images TEXT, " +
+                        "ivEnvelope TEXT, " +
+                        "ivEnvelopeIV TEXT, " +
+                        "keyEnvelope TEXT, " +
+                        "keyVersion INTEGER, " +
+                        "masterId TEXT, " +
+                        "memberName TEXT, " +
+                        "originalContainer TEXT, " +
+                        "originalPosition INTEGER, " +
+                        "owner TEXT, " +
+                        "pageDate TEXT, " +
+                        "pageNumber INTEGER, " +
+                        "path TEXT, " +
+                        "position INTEGER, " +
+                        "s3ObjectsInContent TEXT, " +
+                        "s3ObjectsSizeInContent INTEGER, " +
+                        "signedContentUrl TEXT, " +
+                        "sizeVersions TEXT, " +
+                        "space TEXT, " +
+                        "tags TEXT, " +
+                        "tagsTokens TEXT, " +
+                        "title TEXT, " +
+                        "titleTokens TEXT, " +
+                        "totalItemVersions INTEGER, " +
+                        "totalSize INTEGER, " +
+                        "totalStorage INTEGER, " +
+                        "type TEXT, " +
+                        "updateType TEXT, " +
+                        "updatedBy TEXT, " +
+                        "usage TEXT, " +
+                        "videos TEXT, " +
+                        "PRIMARY KEY (id, version)" +
+                        ");";
+                    response = await dbRun(db, command);
+                    console.log("CREATE TABLE IF NOT EXISTS itemVersions: ", response);
                 });
             });
         });
     }
     const setupDesktopAPIs = () => {
-        const getLastItemKey = async (event, itemList) => {
+        const addAnItemVersion = async (event, itemVersion) => {
             return new Promise((resolve, reject) => {
-                const db = global.sqliteDB;
-                console.log("getLastItemKey");
-                try {
-                    db.get('SELECT * FROM itemKeys ORDER BY key DESC', (err, row) => {
-                        if (err) {
-                            console.error(err.message);
-                            reject({ status: "error", error: err.message })
-                            return;
-                        }
-                        if (row) {
-                            resolve({ status: "ok", key: row.key })
-                        } else {
-                            resolve({ status: "ok" })
-                        }
-                    });
-                } catch (error) {
-                    resolve({ status: "error", error });
+                console.log("addAnItemVersion");
+                console.log(itemVersion);
+                const prepareCommand = ()=> {
+                    let command = "INSERT INTO itemVersions (";
+                    command += "id, version";
+                    if(itemVersion.accumulatedAttachments) command += ", accumulatedAttachments";
+                    if(itemVersion.accumulatedGalleryImages) command += ", accumulatedGalleryImages";
+                    if(itemVersion.accumulatedS3ObjectsInContent) command += ", accumulatedS3ObjectsInContent";
+                    if(itemVersion.attachments) command += ", attachments";
+                    if(itemVersion.audios) command += ", audios";
+                    if(itemVersion.container) command += ", container";
+                    if(itemVersion.content) command += ", content";
+                    if(itemVersion.contentSize) command += ", contentSize";
+                    if(itemVersion.createdTime) command += ", createdTime";
+                    if(itemVersion.dbSize) command += ", dbSize";
+                    if(itemVersion.displayName) command += ", displayName";
+                    if(itemVersion.envelopeIV) command += ", envelopeIV";
+                    if(itemVersion.images) command += ", images";
+                    if(itemVersion.ivEnvelope) command += ", ivEnvelope";
+                    if(itemVersion.ivEnvelopeIV) command += ", ivEnvelopeIV";
+                    if(itemVersion.keyEnvelope) command += ", keyEnvelope";
+                    if(itemVersion.keyVersion) command += ", keyVersion";
+                    if(itemVersion.masterId) command += ", masterId";
+                    if(itemVersion.memberName) command += ", memberName";
+                    if(itemVersion.originalContainer) command += ", originalContainer";
+                    if(itemVersion.originalPosition) command += ", originalPosition";
+                    if(itemVersion.owner) command += ", owner";
+                    if(itemVersion.pageDate) command += ", pageDate";
+                    if(itemVersion.pageNumber) command += ", pageNumber";
+                    if(itemVersion.path) command += ", path";
+                    if(itemVersion.position) command += ", position";
+                    if(itemVersion.s3ObjectsInContent) command += ", s3ObjectsInContent";
+                    if(itemVersion.s3ObjectsSizeInContent) command += ", s3ObjectsSizeInContent";
+                    if(itemVersion.signedContentUrl) command += ", signedContentUrl";
+                    if(itemVersion.sizeVersions) command += ", sizeVersions";
+                    if(itemVersion.space) command += ", space";
+                    if(itemVersion.tags) command += ", tags";
+                    if(itemVersion.tagsTokens) command += ", tagsTokens";
+                    if(itemVersion.title) command += ", title";
+                    if(itemVersion.titleTokens) command += ", titleTokens";
+                    if(itemVersion.totalItemVersions) command += ", totalItemVersions";
+                    if(itemVersion.totalSize) command += ", totalSize";
+                    if(itemVersion.totalStorage) command += ", totalStorage";
+                    if(itemVersion.type) command += ", type";
+                    if(itemVersion.updateType) command += ", updateType";
+                    if(itemVersion.updatedBy) command += ", updatedBy";
+                    if(itemVersion.usage) command += ", usage";
+                    if(itemVersion.videos) command += ", videos";
+
+                    command += ") VALUES (";
+                    command += `'${itemVersion.id}', ${itemVersion.version}`;
+                    if(itemVersion.accumulatedAttachments) command += `, '${JSON.stringify(itemVersion.accumulatedAttachments)}'`;
+                    if(itemVersion.accumulatedGalleryImages) command += `, '${JSON.stringify(itemVersion.accumulatedGalleryImages)}'`;
+                    if(itemVersion.accumulatedS3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.accumulatedS3ObjectsInContent)}'`;
+                    if(itemVersion.attachments) command += `, '${JSON.stringify(itemVersion.attachments)}'`;
+                    if(itemVersion.audios) command += `, '${JSON.stringify(itemVersion.audios)}'`;
+                    if(itemVersion.container) command += `, '${JSON.stringify(itemVersion.container)}'`;
+                    if(itemVersion.content) command += `, '${JSON.stringify(itemVersion.content)}'`;
+                    if(itemVersion.contentSize) command += `, ${JSON.stringify(itemVersion.contentSize)}`;
+                    if(itemVersion.createdTime) command += `, ${JSON.stringify(itemVersion.createdTime)}`;
+                    if(itemVersion.dbSize) command += `, ${JSON.stringify(itemVersion.dbSize)}`;
+                    if(itemVersion.displayName) command += `, '${JSON.stringify(itemVersion.displayName)}'`;
+                    if(itemVersion.envelopeIV) command += `, '${JSON.stringify(itemVersion.envelopeIV)}'`;
+                    if(itemVersion.images) command += `, '${JSON.stringify(itemVersion.images)}'`;
+                    if(itemVersion.ivEnvelope) command += `, '${JSON.stringify(itemVersion.ivEnvelope)}'`;
+                    if(itemVersion.ivEnvelopeIV) command += `, '${JSON.stringify(itemVersion.ivEnvelopeIV)}'`;
+                    if(itemVersion.keyEnvelope) command += `, '${JSON.stringify(itemVersion.keyEnvelope)}'`;
+                    if(itemVersion.keyVersion) command += `, ${JSON.stringify(itemVersion.keyVersion)}`;
+                    if(itemVersion.masterId) command += `, '${JSON.stringify(itemVersion.masterId)}'`;
+                    if(itemVersion.memberName) command += `, '${JSON.stringify(itemVersion.memberName)}'`;
+                    if(itemVersion.originalContainer) command += `, '${JSON.stringify(itemVersion.originalContainer)}'`;
+                    if(itemVersion.originalPosition) command += `, ${JSON.stringify(itemVersion.originalPosition)}`;
+                    if(itemVersion.owner) command += `, '${JSON.stringify(itemVersion.owner)}'`;
+                    if(itemVersion.pageDate) command += `, '${JSON.stringify(itemVersion.pageDate)}'`;
+                    if(itemVersion.pageNumber) command += `, ${JSON.stringify(itemVersion.pageNumber)}`;
+                    if(itemVersion.path) command += `, '${JSON.stringify(itemVersion.path)}'`;
+                    if(itemVersion.position) command += `, ${JSON.stringify(itemVersion.position)}`;
+                    if(itemVersion.s3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.s3ObjectsInContent)}'`;
+                    if(itemVersion.s3ObjectsSizeInContent) command +=`, ${JSON.stringify(itemVersion.s3ObjectsSizeInContent)}`;
+                    if(itemVersion.signedContentUrl) command += `, '${JSON.stringify(itemVersion.signedContentUrl)}'`;
+                    if(itemVersion.sizeVersions) command += `, '${JSON.stringify(itemVersion.sizeVersions)}'`;
+                    if(itemVersion.space) command += `, '${JSON.stringify(itemVersion.space)}'`;
+                    if(itemVersion.tags) command += `, '${JSON.stringify(itemVersion.tags)}'`;
+                    if(itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
+                    if(itemVersion.title) command += `, '${JSON.stringify(itemVersion.title)}'`;
+                    if(itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
+                    if(itemVersion.totalItemVersions) command += `, ${JSON.stringify(itemVersion.totalItemVersions)}`;
+                    if(itemVersion.totalSize) command += `, ${JSON.stringify(itemVersion.totalSize)}`;
+                    if(itemVersion.totalStorage) command += `, ${JSON.stringify(itemVersion.totalStorage)}`;
+                    if(itemVersion.type) command += `, '${JSON.stringify(itemVersion.type)}'`;
+                    if(itemVersion.updateType) command += `, '${JSON.stringify(itemVersion.updateType)}'`;
+                    if(itemVersion.updatedBy) command += `, '${JSON.stringify(itemVersion.updatedBy)}'`;
+                    if(itemVersion.usage) command += `, '${JSON.stringify(itemVersion.usage)}'`;
+                    if(itemVersion.videos) command += `, '${JSON.stringify(itemVersion.videos)}'`;
+                    command += ")";
+                    console.log(command);
                 }
-            })
+                prepareCommand();
+                resolve();
+            });
         }
         const addItemKeys = async (event, itemList) => {
             return new Promise((resolve, reject) => {
                 const db = global.sqliteDB;
                 console.log("addItemKeys");
                 try {
-                    db.serialize(() => {
+                    db.serialize(async () => {
                         for (let i = 0; i < itemList.numberOfItems; i++) {
                             let command;
                             let key = itemList.items[i];
                             command = `SELECT * FROM itemKeys WHERE key="${key}"`
-                            db.get(command, (error, row) => {
-                                if (err) {
-                                    resolve({ status: "error", error });
-                                    return;
-                                }
-                                if (row) {
-                                    resolve({ status: "ok" });
-                                } else {
+                            let response = await dbGet(db, command);
+                            if (response.status === "ok") {
+                                if (!response.row) {
                                     command = `INSERT INTO itemKeys (key, downloaded) VALUES ("${key}", 0);`
-                                    db.run(command, (error) => {
-                                        if (error) {
-                                            resolve({ status: "error", error });
-                                            return;
-                                        }
-                                    });
+                                    response = await dbRun(db, command);
                                 }
-                            });
+                            }
                         }
-                        db.each("SELECT * FROM itemKeys", (err, row) => {
+                        response = await dbAll(db, "SELECT * FROM itemKeys");
+                        if (response.status === "ok") {
+                            if (response.rows) {
+                                response.rows.forEach((row, index) => {
+                                    console.log(row);
+                                })
+                            }
+                        }
+                        /*db.each("SELECT * FROM itemKeys", (err, row) => {
                             console.log(row.key + ": " + row.downloaded);
-                        });
+                        });*/
                     });
                     resolve({ status: "ok" });
                 } catch (error) {
@@ -103,9 +237,51 @@ const setup = () => {
                 }
             })
         }
+        const getAnItemKeyForDwonload = async () => {
+            return new Promise(async (resolve, reject) => {
+                const db = global.sqliteDB;
+                console.log("getAnItemKeyForDwonload");
+                try {
+                    let response = await dbGet(db, 'SELECT * FROM itemKeys WHERE downloaded = 0');
+                    if (response.status === "ok") {
+                        if (response.row) {
+                            resolve({ status: "ok", key: response.row.key })
+                        } else {
+                            resolve({ status: "ok" })
+                        }
+                    } else {
+                        resolve({ status: "error", error: response.error })
+                    }
+                } catch (error) {
+                    resolve({ status: "error", error });
+                }
+            });
+        }
+        const getLastItemKey = async () => {
+            return new Promise(async (resolve, reject) => {
+                const db = global.sqliteDB;
+                console.log("getLastItemKey");
+                try {
+                    let response = await dbGet(db, 'SELECT * FROM itemKeys ORDER BY key DESC');
+                    if (response.status === "ok") {
+                        if (response.row) {
+                            resolve({ status: "ok", key: response.row.key })
+                        } else {
+                            resolve({ status: "ok" })
+                        }
+                    } else {
+                        resolve({ status: "error", error: response.error })
+                    }
+                } catch (error) {
+                    resolve({ status: "error", error });
+                }
+            })
+        }
         ipcMain.handle('ping', () => 'pong');
-        ipcMain.handle('getLastItemKey', getLastItemKey);
+        ipcMain.handle('addAnItemVersion', addAnItemVersion);
         ipcMain.handle('addItemKeys', addItemKeys);
+        ipcMain.handle('getAnItemKeyForDwonload', getAnItemKeyForDwonload);
+        ipcMain.handle('getLastItemKey', getLastItemKey);
     }
     setupDB();
     setupDesktopAPIs()
