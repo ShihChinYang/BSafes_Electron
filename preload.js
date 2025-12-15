@@ -6,8 +6,9 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   electron: () => process.versions.electron,
   // we can also expose variables, not just functions
   ping: () => ipcRenderer.invoke('ping'),
-  addAnItemVersion: (itemVersion) => ipcRenderer.invoke('addAnItemVersion', itemVersion),
+  addAnItemVersion: (key, itemVersion) => ipcRenderer.invoke('addAnItemVersion', key, itemVersion),
   addItemKeys: (itemList) => ipcRenderer.invoke('addItemKeys', itemList),
+  getAnItemForDownloadingObjects: (workspace)=> ipcRenderer.invoke('getAnItemForDownloadingObjects', workspace),
   getAnItemKeyForDwonload: ()=> ipcRenderer.invoke('getAnItemKeyForDwonload'),
   getLastItemKey: () => ipcRenderer.invoke('getLastItemKey'),
 })
