@@ -97,15 +97,15 @@ const setup = () => {
                     console.log("CREATE TABLE IF NOT EXISTS itemVersions: ", response);
                 });
             });
+            return db;
         });
     }
-    const setupDesktopAPIs = () => {
+    const setupDesktopAPIs = (db) => {
         const addAnItemVersion = async (event, key, itemVersion) => {
             return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
                 console.log("addAnItemVersion");
                 try {
-                    //console.log(itemVersion);
-                    const db = global.sqliteDB;
                     const prepareCommand = () => {
                         let command = "INSERT INTO itemVersions (";
                         command += "id, version, downloaded";
@@ -290,6 +290,21 @@ const setup = () => {
                             resolve(response);
                         }
                     } else if (response.status === "ok") {
+                        let existedItemVersion = response.row;
+                        if (true/*JSON.parse(existedItemVersion.container) !== itemVersion.container || existedItemVersion.position !== itemVersion.position*/) {
+                            response = await dbRun(db, `UPDATE itemVersions SET container = '${JSON.stringify(itemVersion.container)}', position = ${itemVersion.position} WHERE id = '${itemVersion.id}' AND version = ${itemVersion.version}`)
+                            if (response.status === "ok") {
+                                response = await dbRun(db, `UPDATE itemKeys SET downloaded = 1 WHERE key = "${key}"`)
+                                if (response.status === "ok") {
+                                    console.log("Updated one itemVersion.")
+                                    resolve(response);
+                                } else {
+                                    resolve({ status: "error", error: "Could not set downloaded = 1" });
+                                }
+                            } else {
+                                resolve({ status: "error", error: "Could not update a version." });
+                            }
+                        }
                         resolve({ status: "error", error: "The itemVersion already exists." });
                     } else {
                         resolve(response);
@@ -302,7 +317,7 @@ const setup = () => {
         }
         const addItemKeys = async (event, itemList) => {
             return new Promise(async (resolve, reject) => {
-                const db = global.sqliteDB;
+                db = global.sqliteDB;
                 console.log("addItemKeys");
                 try {
 
@@ -340,10 +355,22 @@ const setup = () => {
                 }
             })
         }
+        const finishedDownloadingObjectsForAnItem = async (event, id, version) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                response = await dbRun(db, `UPDATE itemVersions SET downloaded = 1 WHERE id = "${id}" AND version = ${version}`);
+                if (response.status === "ok") {
+                    console.log("One item with all objects downloaded.")
+                    resolve({ status: "ok" });
+                } else {
+                    console.log("finishedDownloadingObjectsForAnItem failed: ", response.error)
+                    resolve({ status: "error" });
+                }
+            });
+        }
         const getAnItemForDownloadingObjects = async (event, workspace) => {
             return new Promise(async (resolve, reject) => {
-                const db = global.sqliteDB;
-
+                db = global.sqliteDB;
                 let currentLevel = 0;
                 let containersInLevels = {
                     0: [JSON.stringify(workspace)],
@@ -355,30 +382,24 @@ const setup = () => {
                         let response = await dbGet(db, command);
                         if (response.status === "ok" && response.row) {
                             const item = response.row;
-                            response = await dbRun(db, `UPDATE itemVersions SET downloaded = 1 WHERE id = "${item.id}" AND version = ${item.version}`);
-                            if (response.status === "ok") {
-                                console.log("One item with all objects downloaded.")
-                                resolve({ status: "ok", item });
-                                return;
-                            } else {
-                                resolve({ status: "error" });
-                                return;
-                            }
+                            console.log("Container - ", currentContainer);
+                            resolve({ status: "ok", item });
+                            return;
                         } else if (response.status === "ok") {
                             let command = `SELECT * FROM itemVersions WHERE container = '${currentContainer}' AND type IN ('"B"', '"F"', '"N"', '"D"') ORDER BY position DESC`;
                             let response = await dbAll(db, command);
-                            if(response.status === "ok" && response.rows){
+                            if (response.status === "ok" && response.rows && response.rows.length) {
                                 const nextLevel = currentLevel + 1;
                                 let containers = [];
-                                for(let i=0; i<response.rows.length; i++){
+                                for (let i = 0; i < response.rows.length; i++) {
                                     containers.push(JSON.stringify(response.rows[i].id));
                                 }
-                                if(containersInLevels[nextLevel]){
+                                if (containersInLevels[nextLevel]) {
                                     containersInLevels[nextLevel].push(containers);
                                 } else {
                                     containersInLevels[nextLevel] = containers;
                                 }
-                            } else if(response.status === "error") {
+                            } else if (response.status === "error") {
                                 resolve({ status: "error" });
                                 return;
                             }
@@ -387,16 +408,21 @@ const setup = () => {
                             return;
                         }
                     }
-                    currentLevel ++;
-                    if(!containersInLevels[currentLevel]) {
-                        resolve({status:"ok", theEnd: true});
+                    currentLevel++;
+                    
+                    if (!containersInLevels[currentLevel]) {
+                        console.log("The End");
+                        break;
+                    } else {
+                        console.log(`Level ${currentLevel} containers - `);
                     }
                 }
+                resolve({ status: "ok" })
             });
         }
         const getAnItemKeyForDwonload = async () => {
             return new Promise(async (resolve, reject) => {
-                const db = global.sqliteDB;
+                db = global.sqliteDB;
                 console.log("getAnItemKeyForDwonload");
                 try {
                     let response = await dbGet(db, 'SELECT * FROM itemKeys WHERE downloaded = 0');
@@ -416,7 +442,7 @@ const setup = () => {
         }
         const getLastItemKey = async () => {
             return new Promise(async (resolve, reject) => {
-                const db = global.sqliteDB;
+                db = global.sqliteDB;
                 console.log("getLastItemKey");
                 try {
                     let response = await dbGet(db, 'SELECT * FROM itemKeys ORDER BY key DESC');
@@ -437,12 +463,13 @@ const setup = () => {
         ipcMain.handle('ping', () => 'pong');
         ipcMain.handle('addAnItemVersion', addAnItemVersion);
         ipcMain.handle('addItemKeys', addItemKeys);
+        ipcMain.handle('finishedDownloadingObjectsForAnItem', finishedDownloadingObjectsForAnItem);
         ipcMain.handle('getAnItemForDownloadingObjects', getAnItemForDownloadingObjects);
         ipcMain.handle('getAnItemKeyForDwonload', getAnItemKeyForDwonload);
         ipcMain.handle('getLastItemKey', getLastItemKey);
     }
-    setupDB();
-    setupDesktopAPIs()
+    const db = setupDB();
+    setupDesktopAPIs(db);
 }
 
 app.whenReady().then(() => {
