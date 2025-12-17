@@ -1,12 +1,13 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const sqlite3 = require('sqlite3').verbose();
 const path = require('node:path');
-const fs = require('fs')
+const fs = require('fs');
 
 const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
+const { fsGetS3Object, fsPutS3Object } = require("./s3Helper.js")
 
+var s3ObjectFolderPath = __dirname + '/s3Objects/';
 var databaseFile = 'BSafes.db';
-
 
 const createWindow = () => {
     const win = new BrowserWindow({
@@ -370,6 +371,7 @@ const setup = () => {
         }
         const getAnItemForDownloadingObjects = async (event, workspace) => {
             return new Promise(async (resolve, reject) => {
+                console.log("getAnItemForDownloadingObjects");
                 db = global.sqliteDB;
                 let currentLevel = 0;
                 let containersInLevels = {
@@ -383,6 +385,7 @@ const setup = () => {
                         if (response.status === "ok" && response.row) {
                             const item = response.row;
                             console.log("Container - ", currentContainer);
+                            console.log("Item - ", item.id);
                             resolve({ status: "ok", item });
                             return;
                         } else if (response.status === "ok") {
@@ -409,7 +412,7 @@ const setup = () => {
                         }
                     }
                     currentLevel++;
-                    
+
                     if (!containersInLevels[currentLevel]) {
                         console.log("The End");
                         break;
@@ -445,7 +448,12 @@ const setup = () => {
                 db = global.sqliteDB;
                 console.log("getLastItemKey");
                 try {
-                    let response = await dbGet(db, 'SELECT * FROM itemKeys ORDER BY key DESC');
+                    let response;
+                    /*response = await fsPutS3Object("123:456:789", "ABC");
+                    if(response.status === "ok") {
+                        response = await fsGetS3Object("123:456:789");
+                    }*/
+                    response = await dbGet(db, 'SELECT * FROM itemKeys ORDER BY key DESC');
                     if (response.status === "ok") {
                         if (response.row) {
                             resolve({ status: "ok", key: response.row.key })
@@ -460,6 +468,18 @@ const setup = () => {
                 }
             })
         }
+        const getS3Object = async (event, s3Key) => {
+            return new Promise(async (resolve, reject) => {
+                response = await fsGetS3Object(s3Key);
+                resolve(response);
+            });
+        }
+        const putS3Object = async (event, s3Key, data) => {
+            return new Promise(async (resolve, reject) => {
+                response = await fsPutS3Object(s3Key, data);
+                resolve(response);
+            });
+        }
         ipcMain.handle('ping', () => 'pong');
         ipcMain.handle('addAnItemVersion', addAnItemVersion);
         ipcMain.handle('addItemKeys', addItemKeys);
@@ -467,9 +487,22 @@ const setup = () => {
         ipcMain.handle('getAnItemForDownloadingObjects', getAnItemForDownloadingObjects);
         ipcMain.handle('getAnItemKeyForDwonload', getAnItemKeyForDwonload);
         ipcMain.handle('getLastItemKey', getLastItemKey);
+        ipcMain.handle('getS3Object', getS3Object);
+        ipcMain.handle('putS3Object', putS3Object);
+    }
+    const setupS3 = () => {
+        try {
+            if (!fs.existsSync(s3ObjectFolderPath)) {
+                fs.mkdirSync(s3ObjectFolderPath);
+            }
+        } catch (error) {
+            console.log("Could not open s3Object folder.");
+            return;
+        }
     }
     const db = setupDB();
     setupDesktopAPIs(db);
+    setupS3();
 }
 
 app.whenReady().then(() => {
