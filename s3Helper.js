@@ -8,7 +8,7 @@ const s3Helper = {
             const path = s3ObjectFolderPath + s3Key;
             try{
                 if(fs.existsSync(path)) {
-                    resolve({status:"error", error: "The object already exists."});
+                    resolve({status:"ok", comment: "The object already exists."});
                     return;
                 }       
                 fs.writeFileSync(path, data, {encoding:'binary'});
