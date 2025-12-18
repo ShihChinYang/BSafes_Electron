@@ -13,5 +13,6 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   getAnItemKeyForDwonload: ()=> ipcRenderer.invoke('getAnItemKeyForDwonload'),
   getLastItemKey: () => ipcRenderer.invoke('getLastItemKey'),
   getS3Object: (s3Key) => ipcRenderer.invoke('getS3Object', s3Key),
+  isS3ObjectExisted: (s3Key) => ipcRenderer.invoke('isS3ObjectExisted', s3Key),
   putS3Object: (s3Key, data) => ipcRenderer.invoke('putS3Object', s3Key, data),
 })

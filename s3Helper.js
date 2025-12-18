@@ -19,6 +19,21 @@ const s3Helper = {
             }  
         });
     },
+    fsIsS3ObjectExisted: (s3Key) => {
+        return new Promise(async (resolve) => {
+            const path = s3ObjectFolderPath + s3Key;
+            try{
+                if(fs.existsSync(path)) {
+                    resolve({status:"ok", existed: true});
+                } else {
+                    resolve({status:"ok", existed: false});
+                }    
+            } catch (error) {
+                console.log("fsIsS3ObjectExisted failed: ", error);
+                resolve({status:"error", error});
+            }  
+        });
+    },
     fsGetS3Object: (s3Key) => {
         return new Promise(async (resolve) => {
             const path = s3ObjectFolderPath + s3Key;
