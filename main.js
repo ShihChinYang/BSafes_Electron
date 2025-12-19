@@ -42,6 +42,19 @@ const setup = () => {
 
                 let response;
 
+                const createVirtualTable = async () => {
+                    /*command = `CREATE VIRTUAL TABLE IF NOT EXISTS posts USING FTS5(title, body)`;
+                    response = await dbRun(db, command);
+                    // Insert some sample data into the source table
+                    command = `INSERT INTO posts(title,body)
+VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text search in SQLite using FTS5'),
+('Advanced SQlite Full-text Search','Show you some advanced techniques in SQLite full-text searching'),
+('SQLite Tutorial','Help you learn SQLite quickly and effectively')`
+                    response = await dbRun(db, command);*/
+                    command = `SELECT * FROM posts WHERE posts MATCH 'fts5'`;
+                    response = await dbAll(db, command);
+                }
+
                 const createItemKeysTable = async () => {
                     command = "CREATE TABLE IF NOT EXISTS itemKeys (" +
                         "key TEXT PRIMARY KEY , downloaded INTEGER); ";
@@ -124,6 +137,7 @@ const setup = () => {
                     response = await dbRun(db, command);
                     console.log("CREATE TABLE IF NOT EXISTS items: ", response);
                 }
+                await createVirtualTable();
                 await createItemKeysTable();
                 await createItemVersionsTable();
                 await createItemsTable();
@@ -204,8 +218,10 @@ const setup = () => {
                         let command;
                         if (response.status === "ok" && !response.row) {
                             command = prepareInsertCommand();
+                            console.log("Add one new item.");
                         } else if (response.status === "ok") {
                             command = preapreUpdateCommand();
+                            console.log("Update one item.");
                         } else {
                             resolve(response);
                             return;
@@ -415,12 +431,12 @@ const setup = () => {
                     }
                     let response;
                     response = await updateAnItem();
-                    if(response.status !== "ok"){
+                    if (response.status !== "ok") {
                         resolve(response);
                         return;
                     }
                     response = await updateAnItemVersion();
-                    if(response.status !== "ok"){
+                    if (response.status !== "ok") {
                         resolve(response);
                         return;
                     }
@@ -595,6 +611,59 @@ const setup = () => {
                 resolve(response);
             });
         }
+        const listItems = async (event, body) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                let total, hits = [], result;
+                const container = body.container;
+                const from = body.from;
+                const size = body.size;
+                let response = await dbAll(db, `SELECT COUNT(*) FROM items WHERE container = '${JSON.stringify(container)}'`);
+                if (response.status !== "ok") {
+                    resolve(response);
+                    return;
+                }
+                total = response.rows[0]['COUNT(*)'];
+                let command = `SELECT * FROM items WHERE container = '${JSON.stringify(container)}' ORDER BY position DESC LIMIT ${size}`;
+                if (from) {
+                    command += ` OFFSET ${from}`;
+                }
+                response = await dbAll(db, command);
+                if (response.status !== "ok") {
+                    resolve(response);
+                    return;
+                }
+                const rows = response.rows;
+                const parseRows = () => {
+                    for (let i = 0; i < rows.length; i++) {
+                        let row = rows[i];
+                        let item = {
+                            id: row.id,
+                            version: row.version,
+                        }
+                        if (row.container) item.container = JSON.parse(row.container);
+                        if (row.envelopeIV) item.envelopeIV = JSON.parse(row.envelopeIV);
+                        if (row.ivEnvelope) item.ivEnvelope = JSON.parse(row.ivEnvelope);
+                        if (row.ivEnvelopeIV) item.ivEnvelopeIV = JSON.parse(row.ivEnvelopeIV);
+                        if (row.keyEnvelope) item.keyEnvelope = JSON.parse(row.keyEnvelope);
+                        if (row.keyVersion) item.keyVersion = row.keyVersion;
+                        if (row.pageDate) item.pageDate = JSON.parse(row.pageDate);
+                        if (row.pageNumber) item.pageNumber = row.pageNumber;
+                        if (row.position) item.position = row.position;
+                        if (row.space) item.space = JSON.parse(row.space);
+                        if (row.tags) item.tags = JSON.parse(row.tags);
+                        if (row.tagsTokens) item.tagsTokens = JSON.parse(row.tagsTokens);
+                        if (row.title) item.title = JSON.parse(row.title);
+                        if (row.titleTokens) item.titleTokens = JSON.parse(row.titleTokens);
+                        if (row.type) item.type = JSON.parse(row.type);
+                        hits.push(item);
+                    }
+                }
+                parseRows();
+                result = { status: "ok", hits: { total, hits } }
+                resolve(result);
+            });
+        }
         const putS3Object = async (event, s3Key, data) => {
             return new Promise(async (resolve, reject) => {
                 response = await fsPutS3Object(s3Key, data);
@@ -610,6 +679,7 @@ const setup = () => {
         ipcMain.handle('getLastItemKey', getLastItemKey);
         ipcMain.handle('getS3Object', getS3Object);
         ipcMain.handle('isS3ObjectExisted', isS3ObjectExisted);
+        ipcMain.handle('listItems', listItems);
         ipcMain.handle('putS3Object', putS3Object);
     }
     const setupS3 = () => {
