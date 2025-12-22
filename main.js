@@ -22,6 +22,58 @@ const createWindow = () => {
     win.loadURL('http://127.0.0.1:3000');
 }
 
+const parseItemVersion = (row) => {
+    let itemVersion;
+    itemVersion = {
+        id: row.id,
+        version: row.version,
+    }
+    if (row.accumulatedAttachments) itemVersion.accumulatedAttachments = JSON.parse(row.accumulatedAttachments);
+    if (row.accumulatedGalleryImages) itemVersion.accumulatedGalleryImages = JSON.parse(row.accumulatedGalleryImages);
+    if (row.accumulatedS3ObjectsInContent) itemVersion.accumulatedS3ObjectsInContent = JSON.parse(row.accumulatedS3ObjectsInContent);
+    if (row.attachments) itemVersion.attachments = JSON.parse(row.attachments);
+    if (row.audios) itemVersion.audios = JSON.parse(row.audios);
+    if (row.container) itemVersion.container = JSON.parse(row.container);
+    if (row.content) itemVersion.content = JSON.parse(row.content);
+    if (row.contentSize) itemVersion.contentSize = JSON.parse(row.contentSize);
+    if (row.createdTime) itemVersion.createdTime = JSON.parse(row.createdTime);
+    if (row.dbSize) itemVersion.dbSize = JSON.parse(row.dbSize);
+    if (row.displayName) itemVersion.displayName = JSON.parse(row.displayName);
+    if (row.envelopeIV) itemVersion.envelopeIV = JSON.parse(row.envelopeIV);
+    if (row.images) itemVersion.images = JSON.parse(row.images);
+    if (row.ivEnvelope) itemVersion.ivEnvelope = JSON.parse(row.ivEnvelope);
+    if (row.ivEnvelopeIV) itemVersion.ivEnvelopeIV = JSON.parse(row.ivEnvelopeIV);
+    if (row.keyEnvelope) itemVersion.keyEnvelope = JSON.parse(row.keyEnvelope);
+    if (row.keyVersion) itemVersion.keyVersion = JSON.parse(row.keyVersion);
+    if (row.masterId) itemVersion.masterId = JSON.parse(row.masterId);
+    if (row.memberName) itemVersion.memberName = JSON.parse(row.memberName);
+    if (row.originalContainer) itemVersion.originalContainer = JSON.parse(row.originalContainer);
+    if (row.originalPosition) itemVersion.originalPosition = JSON.parse(row.originalPosition);
+    if (row.owner) itemVersion.owner = JSON.parse(row.owner);
+    if (row.pageDate) itemVersion.pageDate = JSON.parse(row.pageDate);
+    if (row.pageNumber) itemVersion.pageNumber = JSON.parse(row.pageNumber);
+    if (row.path) itemVersion.path = JSON.parse(row.path);
+    if (row.position) itemVersion.position = JSON.parse(row.position);
+    if (row.s3ObjectsInContent) itemVersion.s3ObjectsInContent = JSON.parse(row.s3ObjectsInContent);
+    if (row.s3ObjectsSizeInContent) itemVersion.s3ObjectsSizeInContent = JSON.parse(row.s3ObjectsSizeInContent);
+    if (row.signedContentUrl) itemVersion.signedContentUrl = JSON.parse(row.signedContentUrl);
+    if (row.sizeVersions) itemVersion.sizeVersions = JSON.parse(row.sizeVersions);
+    if (row.space) itemVersion.space = JSON.parse(row.space);
+    if (row.tags) itemVersion.tags = JSON.parse(row.tags);
+    if (row.tagsTokens) itemVersion.tagsTokens = JSON.parse(row.tagsTokens);
+    if (row.title) itemVersion.title = JSON.parse(row.title);
+    if (row.titleTokens) itemVersion.titleTokens = JSON.parse(row.titleTokens);
+    if (row.totalItemVersions) itemVersion.totalItemVersions = JSON.parse(row.totalItemVersions);
+    if (row.totalSize) itemVersion.totalSize = JSON.parse(row.totalSize);
+    if (row.totalStorage) itemVersion.totalStorage = JSON.parse(row.totalStorage);
+    if (row.type) itemVersion.type = JSON.parse(row.type);
+    if (row.updateType) itemVersion.update = JSON.parse(row.updateType);
+    if (row.updatedBy) itemVersion.updatedBy = JSON.parse(row.updatedBy);
+    if (row.usage) itemVersion.usage = JSON.parse(row.usage);
+    if (row.videos) itemVersion.videos = JSON.parse(row.videos);
+    return itemVersion;
+}
+
 const setup = () => {
     const setupDB = () => {
         let joinedDbFile = path.join(__dirname, databaseFile);
@@ -57,7 +109,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
 
                 const createItemKeysTable = async () => {
                     command = "CREATE TABLE IF NOT EXISTS itemKeys (" +
-                        "key TEXT PRIMARY KEY , downloaded INTEGER); ";
+                        "memberId TEXT, key TEXT, downloaded INTEGER, PRIMARY KEY (memberId, key)); ";
                     response = await dbRun(db, command);
                     console.log("CREATE TABLE IF NOT EXISTS itemKeys: ", response);
                 }
@@ -147,7 +199,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
         });
     }
     const setupDesktopAPIs = (db) => {
-        const addAnItemVersion = async (event, key, itemVersion) => {
+        const addAnItemVersion = async (event, memberId, key, itemVersion) => {
             return new Promise(async (resolve, reject) => {
                 db = global.sqliteDB;
                 console.log("addAnItemVersion");
@@ -333,7 +385,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                             let command = prepareCommand();
                             let response = await dbRun(db, command);
                             if (response.status === "ok") {
-                                response = await dbRun(db, `UPDATE itemKeys SET downloaded = 1 WHERE key = "${key}"`)
+                                response = await dbRun(db, `UPDATE itemKeys SET downloaded = 1 WHERE memberId = "${memberId}" AND key = "${key}"`)
                                 if (response.status === "ok") {
                                     console.log("Added one itemVersion.")
                                     resolve(response);
@@ -347,7 +399,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                             if (true) {
                                 response = await dbRun(db, `UPDATE itemVersions SET container = '${JSON.stringify(itemVersion.container)}', position = ${itemVersion.position} WHERE id = '${itemVersion.id}' AND version = ${itemVersion.version}`)
                                 if (response.status === "ok") {
-                                    response = await dbRun(db, `UPDATE itemKeys SET downloaded = 1 WHERE key = "${key}"`)
+                                    response = await dbRun(db, `UPDATE itemKeys SET downloaded = 1 WHERE memberId = "${memberId}" AND key = "${key}"`)
                                     if (response.status === "ok") {
                                         console.log("Updated one itemVersion.")
                                         resolve(response);
@@ -455,12 +507,13 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
 
                     for (let i = 0; i < itemList.numberOfItems; i++) {
                         let command;
+                        const memberId = itemList.memberId;
                         let key = itemList.items[i];
-                        command = `SELECT * FROM itemKeys WHERE key="${key}"`
+                        command = `SELECT * FROM itemKeys WHERE memberId = "${memberId}" AND key="${key}"`
                         let response = await dbGet(db, command);
                         if (response.status === "ok") {
                             if (!response.row) {
-                                command = `INSERT INTO itemKeys (key, downloaded) VALUES ("${key}", 0);`
+                                command = `INSERT INTO itemKeys (memberId, key, downloaded) VALUES ("${memberId}", "${key}", 0);`
                                 response = await dbRun(db, command);
                                 if (response.status === "ok") {
                                     console.log("Added one item key.");
@@ -554,12 +607,12 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                 resolve({ status: "ok" })
             });
         }
-        const getAnItemKeyForDwonload = async () => {
+        const getAnItemKeyForDwonload = async (event, memberId) => {
             return new Promise(async (resolve, reject) => {
                 db = global.sqliteDB;
                 console.log("getAnItemKeyForDwonload");
                 try {
-                    let response = await dbGet(db, 'SELECT * FROM itemKeys WHERE downloaded = 0');
+                    let response = await dbGet(db, `SELECT * FROM itemKeys WHERE memberId = ${memberId}  AND downloaded = 0`);
                     if (response.status === "ok") {
                         if (response.row) {
                             resolve({ status: "ok", key: response.row.key })
@@ -574,7 +627,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                 }
             });
         }
-        const getLastItemKey = async () => {
+        const getLastItemKey = async (event, memberId) => {
             return new Promise(async (resolve, reject) => {
                 db = global.sqliteDB;
                 console.log("getLastItemKey");
@@ -584,7 +637,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                     if(response.status === "ok") {
                         response = await fsGetS3Object("123:456:789");
                     }*/
-                    response = await dbGet(db, 'SELECT * FROM itemKeys ORDER BY key DESC');
+                    response = await dbGet(db, `SELECT * FROM itemKeys WHERE memberId = "${memberId}" ORDER BY key DESC`);
                     if (response.status === "ok") {
                         if (response.row) {
                             resolve({ status: "ok", key: response.row.key })
@@ -598,6 +651,34 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                     resolve({ status: "error", error });
                 }
             })
+        }
+        const getPageItem = async (event, payload) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                const itemId = payload.itemId;
+                let version = payload.oldVersion;
+                if(!version){
+                    let response = await dbGet(db, `SELECT version FROM items WHERE id = "${itemId}"`);
+                    if (response.status !== "ok") {
+                        resolve(response);
+                        return;
+                    }
+                    if(!response.row){
+                        resolve({status:"error", error:"Could not find the item."})
+                        return;
+                    }
+                    version = response.row.version;
+                } 
+                let response = await dbGet(db, `SELECT * FROM itemVersions WHERE id = "${itemId}" AND version = ${version}`);
+                if(response.status === "ok" && response.row){
+                    let item = parseItemVersion(response.row);
+                    resolve({status:"ok", item});
+                } else if(response.status === "ok"){
+                    resolve({status:"ok"});
+                } else {
+                    resolve(response);
+                }
+            }); 
         }
         const getS3Object = async (event, s3Key) => {
             return new Promise(async (resolve, reject) => {
@@ -677,6 +758,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
         ipcMain.handle('getAnItemForDownloadingObjects', getAnItemForDownloadingObjects);
         ipcMain.handle('getAnItemKeyForDwonload', getAnItemKeyForDwonload);
         ipcMain.handle('getLastItemKey', getLastItemKey);
+        ipcMain.handle('getPageItem', getPageItem);
         ipcMain.handle('getS3Object', getS3Object);
         ipcMain.handle('isS3ObjectExisted', isS3ObjectExisted);
         ipcMain.handle('listItems', listItems);
