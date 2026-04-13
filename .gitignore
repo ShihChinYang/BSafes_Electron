@@ -140,5 +140,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# s3Objects
+# db & s3Objects 
+BSafes.db
 s3Objects/

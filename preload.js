@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   ping: () => ipcRenderer.invoke('ping'),
   addAnItemVersion: (memberId, key, itemVersion) => ipcRenderer.invoke('addAnItemVersion', memberId, key, itemVersion),
   addItemKeys: (itemList) => ipcRenderer.invoke('addItemKeys', itemList),
+  failedDownloadingObjectsForAnItem: (id, version) => ipcRenderer.invoke('failedDownloadingObjectsForAnItem', id, version),
   finishedDownloadingObjectsForAnItem: (id, version) => ipcRenderer.invoke('finishedDownloadingObjectsForAnItem', id, version),
   getAnItemForDownloadingObjects: (workspace)=> ipcRenderer.invoke('getAnItemForDownloadingObjects', workspace),
   getAnItemKeyForDwonload: (memberId)=> ipcRenderer.invoke('getAnItemKeyForDwonload', memberId),

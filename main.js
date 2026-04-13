@@ -91,21 +91,7 @@ const setup = () => {
                 console.log('Connected to the BSafes SQlite database.');
                 global.sqliteDB = db;
                 let command;
-
                 let response;
-
-                const createVirtualTable = async () => {
-                    /*command = `CREATE VIRTUAL TABLE IF NOT EXISTS posts USING FTS5(title, body)`;
-                    response = await dbRun(db, command);
-                    // Insert some sample data into the source table
-                    command = `INSERT INTO posts(title,body)
-VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text search in SQLite using FTS5'),
-('Advanced SQlite Full-text Search','Show you some advanced techniques in SQLite full-text searching'),
-('SQLite Tutorial','Help you learn SQLite quickly and effectively')`
-                    response = await dbRun(db, command);*/
-                    command = `SELECT * FROM posts WHERE posts MATCH 'fts5'`;
-                    response = await dbAll(db, command);
-                }
 
                 const createItemKeysTable = async () => {
                     command = "CREATE TABLE IF NOT EXISTS itemKeys (" +
@@ -129,6 +115,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                         "dbSize INTEGER, " +
                         "displayName TEXT, " +
                         "downloaded INTEGER, " +
+                        "downloadFailed INTEGER, " +
                         "envelopeIV TEXT, " +
                         "images TEXT, " +
                         "ivEnvelope TEXT, " +
@@ -189,7 +176,6 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                     response = await dbRun(db, command);
                     console.log("CREATE TABLE IF NOT EXISTS items: ", response);
                 }
-                await createVirtualTable();
                 await createItemKeysTable();
                 await createItemVersionsTable();
                 await createItemsTable();
@@ -226,6 +212,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
 
                             command += ") VALUES (";
                             command += `'${itemVersion.id}', ${itemVersion.version}`;
+                            /*
                             if (itemVersion.container) command += `, '${JSON.stringify(itemVersion.container)}'`;
                             if (itemVersion.envelopeIV) command += `, '${JSON.stringify(itemVersion.envelopeIV)}'`;
                             if (itemVersion.ivEnvelope) command += `, '${JSON.stringify(itemVersion.ivEnvelope)}'`;
@@ -240,7 +227,22 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                             if (itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
                             if (itemVersion.title) command += `, '${JSON.stringify(itemVersion.title)}'`;
                             if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
-                            if (itemVersion.type) command += `, '${JSON.stringify(itemVersion.type)}'`;
+                            if (itemVersion.type) command += `, '${JSON.stringify(itemVersion.type)}'`;*/
+                            if (itemVersion.container) command += `, '${itemVersion.container}'`;
+                            if (itemVersion.envelopeIV) command += `, '${itemVersion.envelopeIV}'`;
+                            if (itemVersion.ivEnvelope) command += `, '${itemVersion.ivEnvelope}'`;
+                            if (itemVersion.ivEnvelopeIV) command += `, '${itemVersion.ivEnvelopeIV}'`;
+                            if (itemVersion.keyEnvelope) command += `, '${itemVersion.keyEnvelope}'`;
+                            if (itemVersion.keyVersion) command += `, ${itemVersion.keyVersion}`;
+                            if (itemVersion.pageDate) command += `, '${itemVersion.pageDate}'`;
+                            if (itemVersion.pageNumber) command += `, ${itemVersion.pageNumber}`;
+                            if (itemVersion.position) command += `, ${itemVersion.position}`;
+                            if (itemVersion.space) command += `, '${itemVersion.space}'`;
+                            if (itemVersion.tags) command += `, '${itemVersion.tags}'`;
+                            if (itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
+                            if (itemVersion.title) command += `, '${itemVersion.title}'`;
+                            if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
+                            if (itemVersion.type) command += `, '${itemVersion.type}'`;
                             command += ")";
                             //console.log(command);
                             return command;
@@ -248,6 +250,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                         const preapreUpdateCommand = () => {
                             let command = "UPDATE items SET ";
                             command += `version = ${itemVersion.version}`;
+                            /*
                             if (itemVersion.container) command += `, container = '${JSON.stringify(itemVersion.container)}'`;
                             if (itemVersion.envelopeIV) command += `, envelopeIV = '${JSON.stringify(itemVersion.envelopeIV)}'`;
                             if (itemVersion.ivEnvelope) command += `, ivEnvelope = '${JSON.stringify(itemVersion.ivEnvelope)}'`;
@@ -262,7 +265,22 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                             if (itemVersion.tagsTokens) command += `, tagsTokens = '${JSON.stringify(itemVersion.tagsTokens)}'`;
                             if (itemVersion.title) command += `, title = '${JSON.stringify(itemVersion.title)}'`;
                             if (itemVersion.titleTokens) command += `, titleTokens = '${JSON.stringify(itemVersion.titleTokens)}'`;
-                            if (itemVersion.type) command += `, type = '${JSON.stringify(itemVersion.type)}'`;
+                            if (itemVersion.type) command += `, type = '${JSON.stringify(itemVersion.type)}'`; */
+                            if (itemVersion.container) command += `, container = '${itemVersion.container}'`;
+                            if (itemVersion.envelopeIV) command += `, envelopeIV = '${itemVersion.envelopeIV}'`;
+                            if (itemVersion.ivEnvelope) command += `, ivEnvelope = '${itemVersion.ivEnvelope}'`;
+                            if (itemVersion.ivEnvelopeIV) command += `, ivEnvelopeIV = '${itemVersion.ivEnvelopeIV}'`;
+                            if (itemVersion.keyEnvelope) command += `, keyEnvelope = '${itemVersion.keyEnvelope}'`;
+                            if (itemVersion.keyVersion) command += `, keyVersion = ${itemVersion.keyVersion}`;
+                            if (itemVersion.pageDate) command += `, pageDate = '${itemVersion.pageDate}'`;
+                            if (itemVersion.pageNumber) command += `, pageNumber = ${itemVersion.pageNumber}`;
+                            if (itemVersion.position) command += `, position = ${itemVersion.position}`;
+                            if (itemVersion.space) command += `, space = '${itemVersion.space}'`;
+                            if (itemVersion.tags) command += `, tags = '${itemVersion.tags}'`;
+                            if (itemVersion.tagsTokens) command += `, tagsTokens = '${JSON.stringify(itemVersion.tagsTokens)}'`;
+                            if (itemVersion.title) command += `, title = '${itemVersion.title}'`;
+                            if (itemVersion.titleTokens) command += `, titleTokens = '${JSON.stringify(itemVersion.titleTokens)}'`;
+                            if (itemVersion.type) command += `, type = '${itemVersion.type}'`;
                             command += `WHERE id = '${itemVersion.id}'`;
                             return command;
                         }
@@ -333,6 +351,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
 
                             command += ") VALUES (";
                             command += `'${itemVersion.id}', ${itemVersion.version}, 0`;
+                            /*
                             if (itemVersion.accumulatedAttachments) command += `, '${JSON.stringify(itemVersion.accumulatedAttachments)}'`;
                             if (itemVersion.accumulatedGalleryImages) command += `, '${JSON.stringify(itemVersion.accumulatedGalleryImages)}'`;
                             if (itemVersion.accumulatedS3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.accumulatedS3ObjectsInContent)}'`;
@@ -375,6 +394,49 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                             if (itemVersion.update) command += `, '${JSON.stringify(itemVersion.update)}'`;
                             if (itemVersion.updatedBy) command += `, '${JSON.stringify(itemVersion.updatedBy)}'`;
                             if (itemVersion.usage) command += `, '${JSON.stringify(itemVersion.usage)}'`;
+                            if (itemVersion.videos) command += `, '${JSON.stringify(itemVersion.videos)}'`;*/
+                            if (itemVersion.accumulatedAttachments) command += `, '${JSON.stringify(itemVersion.accumulatedAttachments)}'`;
+                            if (itemVersion.accumulatedGalleryImages) command += `, '${JSON.stringify(itemVersion.accumulatedGalleryImages)}'`;
+                            if (itemVersion.accumulatedS3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.accumulatedS3ObjectsInContent)}'`;
+                            if (itemVersion.attachments) command += `, '${JSON.stringify(itemVersion.attachments)}'`;
+                            if (itemVersion.audios) command += `, '${JSON.stringify(itemVersion.audios)}'`;
+                            if (itemVersion.container) command += `, '${itemVersion.container}'`;
+                            if (itemVersion.content) command += `, '${itemVersion.content}'`;
+                            if (itemVersion.contentSize) command += `, ${itemVersion.contentSize}`;
+                            if (itemVersion.createdTime) command += `, ${itemVersion.createdTime}`;
+                            if (itemVersion.dbSize) command += `, ${itemVersion.dbSize}`;
+                            if (itemVersion.displayName) command += `, '${itemVersion.displayName}'`;
+                            if (itemVersion.envelopeIV) command += `, '${itemVersion.envelopeIV}'`;
+                            if (itemVersion.images) command += `, '${JSON.stringify(itemVersion.images)}'`;
+                            if (itemVersion.ivEnvelope) command += `, '${itemVersion.ivEnvelope}'`;
+                            if (itemVersion.ivEnvelopeIV) command += `, '${itemVersion.ivEnvelopeIV}'`;
+                            if (itemVersion.keyEnvelope) command += `, '${itemVersion.keyEnvelope}'`;
+                            if (itemVersion.keyVersion) command += `, ${itemVersion.keyVersion}`;
+                            if (itemVersion.masterId) command += `, '${itemVersion.masterId}'`;
+                            if (itemVersion.memberName) command += `, '${itemVersion.memberName}'`;
+                            if (itemVersion.originalContainer) command += `, '${itemVersion.originalContainer}'`;
+                            if (itemVersion.originalPosition) command += `, ${itemVersion.originalPosition}`;
+                            if (itemVersion.owner) command += `, '${itemVersion.owner}'`;
+                            if (itemVersion.pageDate) command += `, '${itemVersion.pageDate}'`;
+                            if (itemVersion.pageNumber) command += `, ${itemVersion.pageNumber}`;
+                            if (itemVersion.path) command += `, '${JSON.stringify(itemVersion.path)}'`;
+                            if (itemVersion.position) command += `, ${itemVersion.position}`;
+                            if (itemVersion.s3ObjectsInContent) command += `, '${itemVersion.s3ObjectsInContent}'`;
+                            if (itemVersion.s3ObjectsSizeInContent) command += `, ${itemVersion.s3ObjectsSizeInContent}`;
+                            if (itemVersion.signedContentUrl) command += `, '${itemVersion.signedContentUrl}'`;
+                            if (itemVersion.sizeVersions) command += `, '${itemVersion.sizeVersions}'`;
+                            if (itemVersion.space) command += `, '${itemVersion.space}'`;
+                            if (itemVersion.tags) command += `, '${itemVersion.tags}'`;
+                            if (itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
+                            if (itemVersion.title) command += `, '${itemVersion.title}'`;
+                            if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
+                            if (itemVersion.totalItemVersions) command += `, ${itemVersion.totalItemVersions}`;
+                            if (itemVersion.totalSize) command += `, ${itemVersion.totalSize}`;
+                            if (itemVersion.totalStorage) command += `, ${itemVersion.totalStorage}`;
+                            if (itemVersion.type) command += `, '${itemVersion.type}'`;
+                            if (itemVersion.update) command += `, '${itemVersion.update}'`;
+                            if (itemVersion.updatedBy) command += `, '${itemVersion.updatedBy}'`;
+                            if (itemVersion.usage) command += `, '${itemVersion.usage}'`;
                             if (itemVersion.videos) command += `, '${JSON.stringify(itemVersion.videos)}'`;
                             command += ")";
                             //console.log(command);
@@ -417,70 +479,6 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                     });
                 }
                 try {
-                    if (0) {
-                        const parseItemVersion = (row) => {
-                            let itemVersion;
-                            itemVersion = {
-                                id: row.id,
-                                version: row.version,
-                            }
-                            if (row.accumulatedAttachments) itemVersion.accumulatedAttachments = JSON.parse(row.accumulatedAttachments);
-                            if (row.accumulatedGalleryImages) itemVersion.accumulatedGalleryImages = JSON.parse(row.accumulatedGalleryImages);
-                            if (row.accumulatedS3ObjectsInContent) itemVersion.accumulatedS3ObjectsInContent = JSON.parse(row.accumulatedS3ObjectsInContent);
-                            if (row.attachments) itemVersion.attachments = JSON.parse(row.attachments);
-                            if (row.audios) itemVersion.audios = JSON.parse(row.audios);
-                            if (row.container) itemVersion.container = JSON.parse(row.container);
-                            if (row.content) itemVersion.content = JSON.parse(row.content);
-                            if (row.contentSize) itemVersion.contentSize = JSON.parse(row.contentSize);
-                            if (row.createdTime) itemVersion.createdTime = JSON.parse(row.createdTime);
-                            if (row.dbSize) itemVersion.dbSize = JSON.parse(row.dbSize);
-                            if (row.displayName) itemVersion.displayName = JSON.parse(row.displayName);
-                            if (row.envelopeIV) itemVersion.envelopeIV = JSON.parse(row.envelopeIV);
-                            if (row.images) itemVersion.images = JSON.parse(row.images);
-                            if (row.ivEnvelope) itemVersion.ivEnvelope = JSON.parse(row.ivEnvelope);
-                            if (row.ivEnvelopeIV) itemVersion.ivEnvelopeIV = JSON.parse(row.ivEnvelopeIV);
-                            if (row.keyEnvelope) itemVersion.keyEnvelope = JSON.parse(row.keyEnvelope);
-                            if (row.keyVersion) itemVersion.keyVersion = JSON.parse(row.keyVersion);
-                            if (row.masterId) itemVersion.masterId = JSON.parse(row.masterId);
-                            if (row.memberName) itemVersion.memberName = JSON.parse(row.memberName);
-                            if (row.originalContainer) itemVersion.originalContainer = JSON.parse(row.originalContainer);
-                            if (row.originalPosition) itemVersion.originalPosition = JSON.parse(row.originalPosition);
-                            if (row.owner) itemVersion.owner = JSON.parse(row.owner);
-                            if (row.pageDate) itemVersion.pageDate = JSON.parse(row.pageDate);
-                            if (row.pageNumber) itemVersion.pageNumber = JSON.parse(row.pageNumber);
-                            if (row.path) itemVersion.path = JSON.parse(row.path);
-                            if (row.position) itemVersion.position = JSON.parse(row.position);
-                            if (row.s3ObjectsInContent) itemVersion.s3ObjectsInContent = JSON.parse(row.s3ObjectsInContent);
-                            if (row.s3ObjectsSizeInContent) itemVersion.s3ObjectsSizeInContent = JSON.parse(row.s3ObjectsSizeInContent);
-                            if (row.signedContentUrl) itemVersion.signedContentUrl = JSON.parse(row.signedContentUrl);
-                            if (row.sizeVersions) itemVersion.sizeVersions = JSON.parse(row.sizeVersions);
-                            if (row.space) itemVersion.space = JSON.parse(row.space);
-                            if (row.tags) itemVersion.tags = JSON.parse(row.tags);
-                            if (row.tagsTokens) itemVersion.tagsTokens = JSON.parse(row.tagsTokens);
-                            if (row.title) itemVersion.title = JSON.parse(row.title);
-                            if (row.titleTokens) itemVersion.titleTokens = JSON.parse(row.titleTokens);
-                            if (row.totalItemVersions) itemVersion.totalItemVersions = JSON.parse(row.totalItemVersions);
-                            if (row.totalSize) itemVersion.totalSize = JSON.parse(row.totalSize);
-                            if (row.totalStorage) itemVersion.totalStorage = JSON.parse(row.totalStorage);
-                            if (row.type) itemVersion.type = JSON.parse(row.type);
-                            if (row.updateType) itemVersion.update = JSON.parse(row.updateType);
-                            if (row.updatedBy) itemVersion.updatedBy = JSON.parse(row.updatedBy);
-                            if (row.usage) itemVersion.usage = JSON.parse(row.usage);
-                            if (row.videos) itemVersion.videos = JSON.parse(row.videos);
-                            return { itemVersion };
-                        }
-                        const compareItemVersion = (item1, item2) => {
-                            const allKeys = Object.keys(item1);
-                            for (let i = 0; i < allKeys.length; i++) {
-                                let key = allKeys[i];
-                                let value1 = JSON.stringify(item1[key]);
-                                let value2 = JSON.stringify(item2[key]);
-                                if (value1 !== value2) {
-                                    console.log(`${key} value differs.`);
-                                }
-                            }
-                        }
-                    }
                     let response;
                     response = await updateAnItem();
                     if (response.status !== "ok") {
@@ -504,7 +502,6 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                 db = global.sqliteDB;
                 console.log("addItemKeys");
                 try {
-
                     for (let i = 0; i < itemList.numberOfItems; i++) {
                         let command;
                         const memberId = itemList.memberId;
@@ -523,22 +520,24 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                             }
                         }
                     }
-                    /*response = await dbAll(db, "SELECT * FROM itemKeys");
-                    if (response.status === "ok") {
-                        if (response.rows) {
-                            response.rows.forEach((row, index) => {
-                                console.log(row);
-                            })
-                        }
-                    }*/
-                    /*db.each("SELECT * FROM itemKeys", (err, row) => {
-                        console.log(row.key + ": " + row.downloaded);
-                    });*/
                     resolve({ status: "ok" });
                 } catch (error) {
                     resolve({ status: "error", error });
                 }
             })
+        }
+        const failedDownloadingObjectsForAnItem = async (event, id, version) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                response = await dbRun(db, `UPDATE itemVersions SET downloadFailed = 1 WHERE id = "${id}" AND version = ${version}`);
+                if (response.status === "ok") {
+                    console.log("One item with all objects downloaded.")
+                    resolve({ status: "ok" });
+                } else {
+                    console.log("finishedDownloadingObjectsForAnItem failed: ", response.error)
+                    resolve({ status: "error" });
+                }
+            });
         }
         const finishedDownloadingObjectsForAnItem = async (event, id, version) => {
             return new Promise(async (resolve, reject) => {
@@ -633,10 +632,6 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                 console.log("getLastItemKey");
                 try {
                     let response;
-                    /*response = await fsPutS3Object("123:456:789", "ABC");
-                    if(response.status === "ok") {
-                        response = await fsGetS3Object("123:456:789");
-                    }*/
                     response = await dbGet(db, `SELECT * FROM itemKeys WHERE memberId = "${memberId}" ORDER BY key DESC`);
                     if (response.status === "ok") {
                         if (response.row) {
@@ -699,13 +694,15 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                 const container = body.container;
                 const from = body.from;
                 const size = body.size;
-                let response = await dbAll(db, `SELECT COUNT(*) FROM items WHERE container = '${JSON.stringify(container)}'`);
+                // let response = await dbAll(db, `SELECT COUNT(*) FROM items WHERE container = '${JSON.stringify(container)}'`);
+                let response = await dbAll(db, `SELECT COUNT(*) FROM items WHERE container = '${container}'`);
                 if (response.status !== "ok") {
                     resolve(response);
                     return;
                 }
                 total = response.rows[0]['COUNT(*)'];
-                let command = `SELECT * FROM items WHERE container = '${JSON.stringify(container)}' ORDER BY position DESC LIMIT ${size}`;
+                //let command = `SELECT * FROM items WHERE container = '${JSON.stringify(container)}' ORDER BY position DESC LIMIT ${size}`;
+                let command = `SELECT * FROM items WHERE container = '${container}' ORDER BY position DESC LIMIT ${size}`;
                 if (from) {
                     command += ` OFFSET ${from}`;
                 }
@@ -722,6 +719,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                             id: row.id,
                             version: row.version,
                         }
+                        /*
                         if (row.container) item.container = JSON.parse(row.container);
                         if (row.envelopeIV) item.envelopeIV = JSON.parse(row.envelopeIV);
                         if (row.ivEnvelope) item.ivEnvelope = JSON.parse(row.ivEnvelope);
@@ -736,7 +734,22 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
                         if (row.tagsTokens) item.tagsTokens = JSON.parse(row.tagsTokens);
                         if (row.title) item.title = JSON.parse(row.title);
                         if (row.titleTokens) item.titleTokens = JSON.parse(row.titleTokens);
-                        if (row.type) item.type = JSON.parse(row.type);
+                        if (row.type) item.type = JSON.parse(row.type);*/
+                        if (row.container) item.container = row.container;
+                        if (row.envelopeIV) item.envelopeIV = row.envelopeIV;
+                        if (row.ivEnvelope) item.ivEnvelope = row.ivEnvelope;
+                        if (row.ivEnvelopeIV) item.ivEnvelopeIV = row.ivEnvelopeIV;
+                        if (row.keyEnvelope) item.keyEnvelope = row.keyEnvelope;
+                        if (row.keyVersion) item.keyVersion = row.keyVersion;
+                        if (row.pageDate) item.pageDate = row.pageDate;
+                        if (row.pageNumber) item.pageNumber = row.pageNumber;
+                        if (row.position) item.position = row.position;
+                        if (row.space) item.space = row.space;
+                        if (row.tags) item.tags = row.tags;
+                        if (row.tagsTokens) item.tagsTokens = JSON.parse(row.tagsTokens);
+                        if (row.title) item.title = row.title;
+                        if (row.titleTokens) item.titleTokens = JSON.parse(row.titleTokens);
+                        if (row.type) item.type = row.type;
                         hits.push(item);
                     }
                 }
@@ -754,6 +767,7 @@ VALUES('Learn SQlite FTS5','This tutorial teaches you how to perform full-text s
         ipcMain.handle('ping', () => 'pong');
         ipcMain.handle('addAnItemVersion', addAnItemVersion);
         ipcMain.handle('addItemKeys', addItemKeys);
+        ipcMain.handle('failedDownloadingObjectsForAnItem', failedDownloadingObjectsForAnItem);
         ipcMain.handle('finishedDownloadingObjectsForAnItem', finishedDownloadingObjectsForAnItem);
         ipcMain.handle('getAnItemForDownloadingObjects', getAnItemForDownloadingObjects);
         ipcMain.handle('getAnItemKeyForDwonload', getAnItemKeyForDwonload);
