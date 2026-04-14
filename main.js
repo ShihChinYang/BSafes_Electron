@@ -28,7 +28,7 @@ const parseItemVersion = (row) => {
         id: row.id,
         version: row.version,
     }
-    if (row.accumulatedAttachments) itemVersion.accumulatedAttachments = JSON.parse(row.accumulatedAttachments);
+    /*if (row.accumulatedAttachments) itemVersion.accumulatedAttachments = JSON.parse(row.accumulatedAttachments);
     if (row.accumulatedGalleryImages) itemVersion.accumulatedGalleryImages = JSON.parse(row.accumulatedGalleryImages);
     if (row.accumulatedS3ObjectsInContent) itemVersion.accumulatedS3ObjectsInContent = JSON.parse(row.accumulatedS3ObjectsInContent);
     if (row.attachments) itemVersion.attachments = JSON.parse(row.attachments);
@@ -69,6 +69,48 @@ const parseItemVersion = (row) => {
     if (row.type) itemVersion.type = JSON.parse(row.type);
     if (row.updateType) itemVersion.update = JSON.parse(row.updateType);
     if (row.updatedBy) itemVersion.updatedBy = JSON.parse(row.updatedBy);
+    if (row.usage) itemVersion.usage = JSON.parse(row.usage);
+    if (row.videos) itemVersion.videos = JSON.parse(row.videos);*/
+    if (row.accumulatedAttachments) itemVersion.accumulatedAttachments = JSON.parse(row.accumulatedAttachments);
+    if (row.accumulatedGalleryImages) itemVersion.accumulatedGalleryImages = JSON.parse(row.accumulatedGalleryImages);
+    if (row.accumulatedS3ObjectsInContent) itemVersion.accumulatedS3ObjectsInContent = JSON.parse(row.accumulatedS3ObjectsInContent);
+    if (row.attachments) itemVersion.attachments = JSON.parse(row.attachments);
+    if (row.audios) itemVersion.audios = JSON.parse(row.audios);
+    if (row.container) itemVersion.container = row.container;
+    if (row.content) itemVersion.content = row.content;
+    if (row.contentSize) itemVersion.contentSize = row.contentSize;
+    if (row.createdTime) itemVersion.createdTime = row.createdTime;
+    if (row.dbSize) itemVersion.dbSize = row.dbSize;
+    if (row.displayName) itemVersion.displayName = row.displayName;
+    if (row.envelopeIV) itemVersion.envelopeIV = row.envelopeIV;
+    if (row.images) itemVersion.images = JSON.parse(row.images);
+    if (row.ivEnvelope) itemVersion.ivEnvelope = row.ivEnvelope;
+    if (row.ivEnvelopeIV) itemVersion.ivEnvelopeIV = row.ivEnvelopeIV;
+    if (row.keyEnvelope) itemVersion.keyEnvelope = row.keyEnvelope;
+    if (row.keyVersion) itemVersion.keyVersion = row.keyVersion;
+    if (row.masterId) itemVersion.masterId = row.masterId;
+    if (row.memberName) itemVersion.memberName = row.memberName;
+    if (row.originalContainer) itemVersion.originalContainer = row.originalContainer;
+    if (row.originalPosition) itemVersion.originalPosition = row.originalPosition;
+    if (row.owner) itemVersion.owner = row.owner;
+    if (row.pageDate) itemVersion.pageDate = row.pageDate;
+    if (row.pageNumber) itemVersion.pageNumber = row.pageNumber;
+    if (row.path) itemVersion.path = JSON.parse(row.path);
+    if (row.position) itemVersion.position = row.position;
+    if (row.s3ObjectsInContent) itemVersion.s3ObjectsInContent = JSON.parse(row.s3ObjectsInContent);
+    if (row.s3ObjectsSizeInContent) itemVersion.s3ObjectsSizeInContent = row.s3ObjectsSizeInContent;
+    if (row.signedContentUrl) itemVersion.signedContentUrl = row.signedContentUrl;
+    if (row.space) itemVersion.space = row.space;
+    if (row.tags) itemVersion.tags = JSON.parse(row.tags);
+    if (row.tagsTokens) itemVersion.tagsTokens = JSON.parse(row.tagsTokens);
+    if (row.title) itemVersion.title = row.title;
+    if (row.titleTokens) itemVersion.titleTokens = JSON.parse(row.titleTokens);
+    if (row.totalItemVersions) itemVersion.totalItemVersions = row.totalItemVersions;
+    if (row.totalSize) itemVersion.totalSize = row.totalSize;
+    if (row.totalStorage) itemVersion.totalStorage = row.totalStorage;
+    if (row.type) itemVersion.type = row.type;
+    if (row.updateType) itemVersion.update = row.updateType;
+    if (row.updatedBy) itemVersion.updatedBy = row.updatedBy;
     if (row.usage) itemVersion.usage = JSON.parse(row.usage);
     if (row.videos) itemVersion.videos = JSON.parse(row.videos);
     return itemVersion;
@@ -238,7 +280,7 @@ const setup = () => {
                             if (itemVersion.pageNumber) command += `, ${itemVersion.pageNumber}`;
                             if (itemVersion.position) command += `, ${itemVersion.position}`;
                             if (itemVersion.space) command += `, '${itemVersion.space}'`;
-                            if (itemVersion.tags) command += `, '${itemVersion.tags}'`;
+                            if (itemVersion.tags) command += `, '${JSON.stringify(itemVersion.tags)}'`;
                             if (itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
                             if (itemVersion.title) command += `, '${itemVersion.title}'`;
                             if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
@@ -276,7 +318,7 @@ const setup = () => {
                             if (itemVersion.pageNumber) command += `, pageNumber = ${itemVersion.pageNumber}`;
                             if (itemVersion.position) command += `, position = ${itemVersion.position}`;
                             if (itemVersion.space) command += `, space = '${itemVersion.space}'`;
-                            if (itemVersion.tags) command += `, tags = '${itemVersion.tags}'`;
+                            if (itemVersion.tags) command += `, tags = '${JSON.stringify(itemVersion.tags)}'`;
                             if (itemVersion.tagsTokens) command += `, tagsTokens = '${JSON.stringify(itemVersion.tagsTokens)}'`;
                             if (itemVersion.title) command += `, title = '${itemVersion.title}'`;
                             if (itemVersion.titleTokens) command += `, titleTokens = '${JSON.stringify(itemVersion.titleTokens)}'`;
@@ -421,12 +463,11 @@ const setup = () => {
                             if (itemVersion.pageNumber) command += `, ${itemVersion.pageNumber}`;
                             if (itemVersion.path) command += `, '${JSON.stringify(itemVersion.path)}'`;
                             if (itemVersion.position) command += `, ${itemVersion.position}`;
-                            if (itemVersion.s3ObjectsInContent) command += `, '${itemVersion.s3ObjectsInContent}'`;
+                            if (itemVersion.s3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.s3ObjectsInContent)}'`;
                             if (itemVersion.s3ObjectsSizeInContent) command += `, ${itemVersion.s3ObjectsSizeInContent}`;
                             if (itemVersion.signedContentUrl) command += `, '${itemVersion.signedContentUrl}'`;
-                            if (itemVersion.sizeVersions) command += `, '${itemVersion.sizeVersions}'`;
                             if (itemVersion.space) command += `, '${itemVersion.space}'`;
-                            if (itemVersion.tags) command += `, '${itemVersion.tags}'`;
+                            if (itemVersion.tags) command += `, '${JSON.stringify(itemVersion.tags)}'`;
                             if (itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
                             if (itemVersion.title) command += `, '${itemVersion.title}'`;
                             if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
@@ -436,7 +477,7 @@ const setup = () => {
                             if (itemVersion.type) command += `, '${itemVersion.type}'`;
                             if (itemVersion.update) command += `, '${itemVersion.update}'`;
                             if (itemVersion.updatedBy) command += `, '${itemVersion.updatedBy}'`;
-                            if (itemVersion.usage) command += `, '${itemVersion.usage}'`;
+                            if (itemVersion.usage) command += `, '${JSON.stringify(itemVersion.usage)}'`;
                             if (itemVersion.videos) command += `, '${JSON.stringify(itemVersion.videos)}'`;
                             command += ")";
                             //console.log(command);
@@ -459,7 +500,7 @@ const setup = () => {
                             }
                         } else if (response.status === "ok") {
                             if (true) {
-                                response = await dbRun(db, `UPDATE itemVersions SET container = '${JSON.stringify(itemVersion.container)}', position = ${itemVersion.position} WHERE id = '${itemVersion.id}' AND version = ${itemVersion.version}`)
+                                response = await dbRun(db, `UPDATE itemVersions SET container = '${itemVersion.container}', position = ${itemVersion.position} WHERE id = '${itemVersion.id}' AND version = ${itemVersion.version}`)
                                 if (response.status === "ok") {
                                     response = await dbRun(db, `UPDATE itemKeys SET downloaded = 1 WHERE memberId = "${memberId}" AND key = "${key}"`)
                                     if (response.status === "ok") {
@@ -558,27 +599,27 @@ const setup = () => {
                 db = global.sqliteDB;
                 let currentLevel = 0;
                 let containersInLevels = {
-                    0: [JSON.stringify(workspace)],
+                    0: [workspace],
                 };
                 while (1) {
                     for (let i = 0; i < containersInLevels[currentLevel].length; i++) {
                         let currentContainer = containersInLevels[currentLevel][i];
-                        let command = `SELECT * FROM itemVersions WHERE container = '${currentContainer}' AND downloaded = 0 ORDER BY position DESC`;
+                        let command = `SELECT * FROM itemVersions WHERE container = "${currentContainer}" AND downloaded = 0 ORDER BY position DESC`;
                         let response = await dbGet(db, command);
                         if (response.status === "ok" && response.row) {
-                            const item = response.row;
+                            let item = parseItemVersion(response.row);
                             console.log("Container - ", currentContainer);
                             console.log("Item - ", item.id);
                             resolve({ status: "ok", item });
                             return;
                         } else if (response.status === "ok") {
-                            let command = `SELECT * FROM itemVersions WHERE container = '${currentContainer}' AND type IN ('"B"', '"F"', '"N"', '"D"') ORDER BY position DESC`;
+                            let command = `SELECT * FROM itemVersions WHERE container = "${currentContainer}" AND type IN ('B', 'F', 'N', 'D') ORDER BY position DESC`;
                             let response = await dbAll(db, command);
                             if (response.status === "ok" && response.rows && response.rows.length) {
                                 const nextLevel = currentLevel + 1;
                                 let containers = [];
                                 for (let i = 0; i < response.rows.length; i++) {
-                                    containers.push(JSON.stringify(response.rows[i].id));
+                                    containers.push(response.rows[i].id);
                                 }
                                 if (containersInLevels[nextLevel]) {
                                     containersInLevels[nextLevel].push(containers);
@@ -745,7 +786,7 @@ const setup = () => {
                         if (row.pageNumber) item.pageNumber = row.pageNumber;
                         if (row.position) item.position = row.position;
                         if (row.space) item.space = row.space;
-                        if (row.tags) item.tags = row.tags;
+                        if (row.tags) item.tags = JSON.parse(row.tags);
                         if (row.tagsTokens) item.tagsTokens = JSON.parse(row.tagsTokens);
                         if (row.title) item.title = row.title;
                         if (row.titleTokens) item.titleTokens = JSON.parse(row.titleTokens);
