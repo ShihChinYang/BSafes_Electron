@@ -121,9 +121,7 @@ const setup = () => {
         let joinedDbFile = path.join(__dirname, databaseFile);
         fs.access(joinedDbFile, fs.F_OK, (err) => {
             if (err) {
-                //console.error(err)
                 fs.closeSync(fs.openSync(joinedDbFile, 'w'));
-                //return;
             }
             //file exists
             let db = new sqlite3.Database(joinedDbFile, async (err) => {
@@ -218,15 +216,42 @@ const setup = () => {
                     response = await dbRun(db, command);
                     console.log("CREATE TABLE IF NOT EXISTS items: ", response);
                 }
+                const createMembersTable = async () => {
+                    command = "CREATE TABLE IF NOT EXISTS members (" +
+                        "authId TEXT PRIMARY KEY , " +
+                        "memberId TEXT, " +
+                        "displayName TEXT, " +
+                        "privateKeyEnvelope TEXT, " +
+                        "searchKeyEnvelope TEXT, " +
+                        "searchIVEnvelope TEXT, " +
+                        "publicKey TEXT, " +
+                        "); ";
+                    response = await dbRun(db, command);
+                    console.log("CREATE TABLE IF NOT EXISTS items: ", response);
+                }
                 await createItemKeysTable();
                 await createItemVersionsTable();
                 await createItemsTable();
-
+                await createMembersTable();
             });
             return db;
         });
     }
     const setupDesktopAPIs = (db) => {
+        const addAMemberIfNotExists = async (event, authId, member) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                console.log("addAMember");
+                let response = await dbGet(db, `SELECT * FROM members WHERE authId="${authId}"`);
+                if (response.status === "ok" && !response.row) {
+                    let command = `INSERT INTO members (authId, memberId, displayName, privateKeyEnvelope, searchKeyEnvelope, searchIVEnvelope, publicKey) VALUES ("${authId}", "${member.memberId}", "${member.displayName}", '${member.privateKeyEnvelope}', '${member.searchKeyEnvelope}', '${member.searchIVEnvelope}', '${member.publicKey}');`
+                    response = await dbRun(db, command);
+                    resolve(response);
+                } else {
+                    resolve({ status: "ok"});
+                }
+            });
+        }
         const addAnItemVersion = async (event, memberId, key, itemVersion) => {
             return new Promise(async (resolve, reject) => {
                 db = global.sqliteDB;
@@ -254,22 +279,6 @@ const setup = () => {
 
                             command += ") VALUES (";
                             command += `'${itemVersion.id}', ${itemVersion.version}`;
-                            /*
-                            if (itemVersion.container) command += `, '${JSON.stringify(itemVersion.container)}'`;
-                            if (itemVersion.envelopeIV) command += `, '${JSON.stringify(itemVersion.envelopeIV)}'`;
-                            if (itemVersion.ivEnvelope) command += `, '${JSON.stringify(itemVersion.ivEnvelope)}'`;
-                            if (itemVersion.ivEnvelopeIV) command += `, '${JSON.stringify(itemVersion.ivEnvelopeIV)}'`;
-                            if (itemVersion.keyEnvelope) command += `, '${JSON.stringify(itemVersion.keyEnvelope)}'`;
-                            if (itemVersion.keyVersion) command += `, ${JSON.stringify(itemVersion.keyVersion)}`;
-                            if (itemVersion.pageDate) command += `, '${JSON.stringify(itemVersion.pageDate)}'`;
-                            if (itemVersion.pageNumber) command += `, ${JSON.stringify(itemVersion.pageNumber)}`;
-                            if (itemVersion.position) command += `, ${JSON.stringify(itemVersion.position)}`;
-                            if (itemVersion.space) command += `, '${JSON.stringify(itemVersion.space)}'`;
-                            if (itemVersion.tags) command += `, '${JSON.stringify(itemVersion.tags)}'`;
-                            if (itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
-                            if (itemVersion.title) command += `, '${JSON.stringify(itemVersion.title)}'`;
-                            if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
-                            if (itemVersion.type) command += `, '${JSON.stringify(itemVersion.type)}'`;*/
                             if (itemVersion.container) command += `, '${itemVersion.container}'`;
                             if (itemVersion.envelopeIV) command += `, '${itemVersion.envelopeIV}'`;
                             if (itemVersion.ivEnvelope) command += `, '${itemVersion.ivEnvelope}'`;
@@ -292,22 +301,6 @@ const setup = () => {
                         const preapreUpdateCommand = () => {
                             let command = "UPDATE items SET ";
                             command += `version = ${itemVersion.version}`;
-                            /*
-                            if (itemVersion.container) command += `, container = '${JSON.stringify(itemVersion.container)}'`;
-                            if (itemVersion.envelopeIV) command += `, envelopeIV = '${JSON.stringify(itemVersion.envelopeIV)}'`;
-                            if (itemVersion.ivEnvelope) command += `, ivEnvelope = '${JSON.stringify(itemVersion.ivEnvelope)}'`;
-                            if (itemVersion.ivEnvelopeIV) command += `, ivEnvelopeIV = '${JSON.stringify(itemVersion.ivEnvelopeIV)}'`;
-                            if (itemVersion.keyEnvelope) command += `, keyEnvelope = '${JSON.stringify(itemVersion.keyEnvelope)}'`;
-                            if (itemVersion.keyVersion) command += `, keyVersion = ${JSON.stringify(itemVersion.keyVersion)}`;
-                            if (itemVersion.pageDate) command += `, pageDate = '${JSON.stringify(itemVersion.pageDate)}'`;
-                            if (itemVersion.pageNumber) command += `, pageNumber = ${JSON.stringify(itemVersion.pageNumber)}`;
-                            if (itemVersion.position) command += `, position = ${JSON.stringify(itemVersion.position)}`;
-                            if (itemVersion.space) command += `, space = '${JSON.stringify(itemVersion.space)}'`;
-                            if (itemVersion.tags) command += `, tags = '${JSON.stringify(itemVersion.tags)}'`;
-                            if (itemVersion.tagsTokens) command += `, tagsTokens = '${JSON.stringify(itemVersion.tagsTokens)}'`;
-                            if (itemVersion.title) command += `, title = '${JSON.stringify(itemVersion.title)}'`;
-                            if (itemVersion.titleTokens) command += `, titleTokens = '${JSON.stringify(itemVersion.titleTokens)}'`;
-                            if (itemVersion.type) command += `, type = '${JSON.stringify(itemVersion.type)}'`; */
                             if (itemVersion.container) command += `, container = '${itemVersion.container}'`;
                             if (itemVersion.envelopeIV) command += `, envelopeIV = '${itemVersion.envelopeIV}'`;
                             if (itemVersion.ivEnvelope) command += `, ivEnvelope = '${itemVersion.ivEnvelope}'`;
@@ -593,6 +586,18 @@ const setup = () => {
                 }
             });
         }
+        const getAMmberByAuthId = async (event, authId) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                console.log("getAMmberByAuthId");
+                let response = await dbGet(db, `SELECT * FROM members WHERE authId="${authId}"`);
+                if (response.status === "ok" && response.row) {
+                    resolve({ status: "ok", member: response.row });
+                } else {
+                    resolve(response);
+                }
+            });
+        }
         const getAnItemForDownloadingObjects = async (event, workspace) => {
             return new Promise(async (resolve, reject) => {
                 console.log("getAnItemForDownloadingObjects");
@@ -693,28 +698,28 @@ const setup = () => {
                 db = global.sqliteDB;
                 const itemId = payload.itemId;
                 let version = payload.oldVersion;
-                if(!version){
+                if (!version) {
                     let response = await dbGet(db, `SELECT version FROM items WHERE id = "${itemId}"`);
                     if (response.status !== "ok") {
                         resolve(response);
                         return;
                     }
-                    if(!response.row){
-                        resolve({status:"error", error:"Could not find the item."})
+                    if (!response.row) {
+                        resolve({ status: "error", error: "Could not find the item." })
                         return;
                     }
                     version = response.row.version;
-                } 
+                }
                 let response = await dbGet(db, `SELECT * FROM itemVersions WHERE id = "${itemId}" AND version = ${version}`);
-                if(response.status === "ok" && response.row){
+                if (response.status === "ok" && response.row) {
                     let item = parseItemVersion(response.row);
-                    resolve({status:"ok", item});
-                } else if(response.status === "ok"){
-                    resolve({status:"ok"});
+                    resolve({ status: "ok", item });
+                } else if (response.status === "ok") {
+                    resolve({ status: "ok" });
                 } else {
                     resolve(response);
                 }
-            }); 
+            });
         }
         const getS3Object = async (event, s3Key) => {
             return new Promise(async (resolve, reject) => {
