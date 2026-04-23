@@ -4,7 +4,8 @@ const path = require('node:path');
 const fs = require('fs');
 
 const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
-const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted } = require("./s3Helper.js")
+const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted } = require("./s3Helper.js");
+const { get } = require('node:http');
 
 var s3ObjectFolderPath = __dirname + '/s3Objects/';
 var databaseFile = 'BSafes.db';
@@ -220,14 +221,15 @@ const setup = () => {
                     command = "CREATE TABLE IF NOT EXISTS members (" +
                         "authId TEXT PRIMARY KEY , " +
                         "memberId TEXT, " +
+                        "currentKeyVersion INTEGER, " +
                         "displayName TEXT, " +
                         "privateKeyEnvelope TEXT, " +
                         "searchKeyEnvelope TEXT, " +
                         "searchIVEnvelope TEXT, " +
-                        "publicKey TEXT, " +
+                        "publicKey TEXT " +
                         "); ";
                     response = await dbRun(db, command);
-                    console.log("CREATE TABLE IF NOT EXISTS items: ", response);
+                    console.log("CREATE TABLE IF NOT EXISTS members: ", response);
                 }
                 await createItemKeysTable();
                 await createItemVersionsTable();
@@ -244,7 +246,7 @@ const setup = () => {
                 console.log("addAMember");
                 let response = await dbGet(db, `SELECT * FROM members WHERE authId="${authId}"`);
                 if (response.status === "ok" && !response.row) {
-                    let command = `INSERT INTO members (authId, memberId, displayName, privateKeyEnvelope, searchKeyEnvelope, searchIVEnvelope, publicKey) VALUES ("${authId}", "${member.memberId}", "${member.displayName}", '${member.privateKeyEnvelope}', '${member.searchKeyEnvelope}', '${member.searchIVEnvelope}', '${member.publicKey}');`
+                    let command = `INSERT INTO members (authId, memberId, currentKeyVersion, displayName, privateKeyEnvelope, searchKeyEnvelope, searchIVEnvelope, publicKey) VALUES ("${authId}", "${member.memberId}", "${member.currentKeyVersion}", "${member.displayName}", '${member.privateKeyEnvelope}', '${member.searchKeyEnvelope}', '${member.searchIVEnvelope}', '${member.publicKey}');`
                     response = await dbRun(db, command);
                     resolve(response);
                 } else {
@@ -811,10 +813,12 @@ const setup = () => {
             });
         }
         ipcMain.handle('ping', () => 'pong');
+        ipcMain.handle('addAMemberIfNotExists', addAMemberIfNotExists);
         ipcMain.handle('addAnItemVersion', addAnItemVersion);
         ipcMain.handle('addItemKeys', addItemKeys);
         ipcMain.handle('failedDownloadingObjectsForAnItem', failedDownloadingObjectsForAnItem);
         ipcMain.handle('finishedDownloadingObjectsForAnItem', finishedDownloadingObjectsForAnItem);
+        ipcMain.handle('getAMmberByAuthId', getAMmberByAuthId);
         ipcMain.handle('getAnItemForDownloadingObjects', getAnItemForDownloadingObjects);
         ipcMain.handle('getAnItemKeyForDwonload', getAnItemKeyForDwonload);
         ipcMain.handle('getLastItemKey', getLastItemKey);
