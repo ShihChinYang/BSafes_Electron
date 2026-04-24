@@ -1,11 +1,15 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, protocol, net } = require('electron')
 const sqlite3 = require('sqlite3').verbose();
 const path = require('node:path');
 const fs = require('fs');
+const handler = require('serve-handler');
+const http = require('http');
+
 
 const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
 const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted } = require("./s3Helper.js");
 const { get } = require('node:http');
+const { it } = require('node:test');
 
 var s3ObjectFolderPath = __dirname + '/s3Objects/';
 var databaseFile = 'BSafes.db';
@@ -21,6 +25,7 @@ const createWindow = () => {
     win.webContents.openDevTools()
     //win.loadFile('hello.html');
     win.loadURL('http://127.0.0.1:3000');
+    //win.loadURL('http://localhost:8080/test/testQueryString.html');
 }
 
 const parseItemVersion = (row) => {
@@ -250,7 +255,7 @@ const setup = () => {
                     response = await dbRun(db, command);
                     resolve(response);
                 } else {
-                    resolve({ status: "ok"});
+                    resolve({ status: "ok" });
                 }
             });
         }
@@ -844,11 +849,31 @@ const setup = () => {
 }
 
 app.whenReady().then(() => {
-    createWindow();
-    setup();
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
-    })
+    const server = http.createServer((request, response) => {
+        // You pass two more arguments for config and middleware
+        // More details here: https://github.com/vercel/serve-handler#options
+        return handler(request, response, { public: 'out' });
+    });
+
+    try {
+        server.listen(3000, () => {
+            console.log('Running at http://localhost:3000');
+            createWindow();
+            setup();
+            app.on('activate', () => {
+                if (BrowserWindow.getAllWindows().length === 0) createWindow();
+            })
+        });
+        server.once('error', (err) => {
+            console.log(
+                'There was an error starting the server in the error listener:',
+                err
+            );
+        });
+    } catch (error) {
+        console.log("Failed to start the server: ", error);
+    }
+
 })
 
 app.on('window-all-closed', () => {
