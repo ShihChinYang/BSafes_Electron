@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, protocol, net } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const sqlite3 = require('sqlite3').verbose();
 const path = require('node:path');
 const fs = require('fs');
@@ -10,6 +10,7 @@ const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
 const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted } = require("./s3Helper.js");
 const { get } = require('node:http');
 const { it } = require('node:test');
+const { stat } = require('node:fs');
 
 var s3ObjectFolderPath = __dirname + '/s3Objects/';
 var databaseFile = 'BSafes.db';
@@ -848,33 +849,68 @@ const setup = () => {
     setupS3();
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
     const server = http.createServer((request, response) => {
         // You pass two more arguments for config and middleware
         // More details here: https://github.com/vercel/serve-handler#options
         return handler(request, response, { public: 'out' });
     });
 
-    try {
-        server.listen(3000, () => {
-            console.log('Running at http://localhost:3000');
+    let port = 5200;
+    let serverStarted = false;
+    const startServer = (server, port) => {
+        return new Promise((resolve, reject) => {
+            try {
+                server.listen(port);
+
+                server.on('listening', () => {
+                    if (!serverStarted) {
+                        console.log(`Server successfully running on port: ${server.address().port}`);
+                        serverStarted = true;
+                        resolve({ status: "ok" });
+                    }
+                });
+
+                server.once('error', (err) => {
+                    console.log(
+                        'There was an error starting the server in the error listener:',
+                        err
+                    );
+                    server.close();
+                    resolve({ status: "error", error: err });
+                });
+            } catch (error) {
+                console.log("Failed to start the server: ", error);
+                resolve({ status: "error", error: err });
+            }
+        });
+    };
+
+    while (port < 5300) {
+        const response = await startServer(server, port);
+        if (response.status === "ok") {
             createWindow();
             setup();
             app.on('activate', () => {
                 if (BrowserWindow.getAllWindows().length === 0) createWindow();
             })
-        });
-        server.once('error', (err) => {
-            console.log(
-                'There was an error starting the server in the error listener:',
-                err
-            );
-        });
-    } catch (error) {
-        console.log("Failed to start the server: ", error);
+            break;
+        } else {
+            if (response.error.code === 'EADDRINUSE') {
+                console.log(`Port ${port} is in use, trying port ${port + 1}...`);
+                port++;
+            } else {
+                console.log("Failed to start the server: ", response.error);
+                break;
+            }
+        }
     }
-
-})
+    if (!serverStarted) {
+        console.error("Failed to start the server on any available port.");
+        dialog.showErrorBox('Main Process Error', 'Failed to start the server on any available port. Please make sure ports 5200-5299 are available and restart the application.');
+        app.quit();
+    }
+});
 
 app.on('window-all-closed', () => {
     const db = global.sqliteDB;
