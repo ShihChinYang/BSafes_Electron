@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, session } = require('electron')
 const sqlite3 = require('sqlite3').verbose();
 const path = require('node:path');
 const fs = require('fs');
@@ -15,7 +15,7 @@ const { stat } = require('node:fs');
 var s3ObjectFolderPath = __dirname + '/s3Objects/';
 var databaseFile = 'BSafes.db';
 
-const createWindow = () => {
+const createWindow = async (port) => {
     const win = new BrowserWindow({
         width: 800,
         heidht: 600,
@@ -23,9 +23,10 @@ const createWindow = () => {
             preload: path.join(__dirname, 'preload.js')
         }
     });
+    await session.defaultSession.clearCache();
     win.webContents.openDevTools()
     //win.loadFile('hello.html');
-    win.loadURL('http://127.0.0.1:3000');
+    win.loadURL(`http://127.0.0.1:${port}`);
     //win.loadURL('http://localhost:8080/test/testQueryString.html');
 }
 
@@ -303,7 +304,6 @@ const setup = () => {
                             if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
                             if (itemVersion.type) command += `, '${itemVersion.type}'`;
                             command += ")";
-                            //console.log(command);
                             return command;
                         }
                         const preapreUpdateCommand = () => {
@@ -394,50 +394,7 @@ const setup = () => {
 
                             command += ") VALUES (";
                             command += `'${itemVersion.id}', ${itemVersion.version}, 0`;
-                            /*
-                            if (itemVersion.accumulatedAttachments) command += `, '${JSON.stringify(itemVersion.accumulatedAttachments)}'`;
-                            if (itemVersion.accumulatedGalleryImages) command += `, '${JSON.stringify(itemVersion.accumulatedGalleryImages)}'`;
-                            if (itemVersion.accumulatedS3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.accumulatedS3ObjectsInContent)}'`;
-                            if (itemVersion.attachments) command += `, '${JSON.stringify(itemVersion.attachments)}'`;
-                            if (itemVersion.audios) command += `, '${JSON.stringify(itemVersion.audios)}'`;
-                            if (itemVersion.container) command += `, '${JSON.stringify(itemVersion.container)}'`;
-                            if (itemVersion.content) command += `, '${JSON.stringify(itemVersion.content)}'`;
-                            if (itemVersion.contentSize) command += `, ${JSON.stringify(itemVersion.contentSize)}`;
-                            if (itemVersion.createdTime) command += `, ${JSON.stringify(itemVersion.createdTime)}`;
-                            if (itemVersion.dbSize) command += `, ${JSON.stringify(itemVersion.dbSize)}`;
-                            if (itemVersion.displayName) command += `, '${JSON.stringify(itemVersion.displayName)}'`;
-                            if (itemVersion.envelopeIV) command += `, '${JSON.stringify(itemVersion.envelopeIV)}'`;
-                            if (itemVersion.images) command += `, '${JSON.stringify(itemVersion.images)}'`;
-                            if (itemVersion.ivEnvelope) command += `, '${JSON.stringify(itemVersion.ivEnvelope)}'`;
-                            if (itemVersion.ivEnvelopeIV) command += `, '${JSON.stringify(itemVersion.ivEnvelopeIV)}'`;
-                            if (itemVersion.keyEnvelope) command += `, '${JSON.stringify(itemVersion.keyEnvelope)}'`;
-                            if (itemVersion.keyVersion) command += `, ${JSON.stringify(itemVersion.keyVersion)}`;
-                            if (itemVersion.masterId) command += `, '${JSON.stringify(itemVersion.masterId)}'`;
-                            if (itemVersion.memberName) command += `, '${JSON.stringify(itemVersion.memberName)}'`;
-                            if (itemVersion.originalContainer) command += `, '${JSON.stringify(itemVersion.originalContainer)}'`;
-                            if (itemVersion.originalPosition) command += `, ${JSON.stringify(itemVersion.originalPosition)}`;
-                            if (itemVersion.owner) command += `, '${JSON.stringify(itemVersion.owner)}'`;
-                            if (itemVersion.pageDate) command += `, '${JSON.stringify(itemVersion.pageDate)}'`;
-                            if (itemVersion.pageNumber) command += `, ${JSON.stringify(itemVersion.pageNumber)}`;
-                            if (itemVersion.path) command += `, '${JSON.stringify(itemVersion.path)}'`;
-                            if (itemVersion.position) command += `, ${JSON.stringify(itemVersion.position)}`;
-                            if (itemVersion.s3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.s3ObjectsInContent)}'`;
-                            if (itemVersion.s3ObjectsSizeInContent) command += `, ${JSON.stringify(itemVersion.s3ObjectsSizeInContent)}`;
-                            if (itemVersion.signedContentUrl) command += `, '${JSON.stringify(itemVersion.signedContentUrl)}'`;
-                            if (itemVersion.sizeVersions) command += `, '${JSON.stringify(itemVersion.sizeVersions)}'`;
-                            if (itemVersion.space) command += `, '${JSON.stringify(itemVersion.space)}'`;
-                            if (itemVersion.tags) command += `, '${JSON.stringify(itemVersion.tags)}'`;
-                            if (itemVersion.tagsTokens) command += `, '${JSON.stringify(itemVersion.tagsTokens)}'`;
-                            if (itemVersion.title) command += `, '${JSON.stringify(itemVersion.title)}'`;
-                            if (itemVersion.titleTokens) command += `, '${JSON.stringify(itemVersion.titleTokens)}'`;
-                            if (itemVersion.totalItemVersions) command += `, ${JSON.stringify(itemVersion.totalItemVersions)}`;
-                            if (itemVersion.totalSize) command += `, ${JSON.stringify(itemVersion.totalSize)}`;
-                            if (itemVersion.totalStorage) command += `, ${JSON.stringify(itemVersion.totalStorage)}`;
-                            if (itemVersion.type) command += `, '${JSON.stringify(itemVersion.type)}'`;
-                            if (itemVersion.update) command += `, '${JSON.stringify(itemVersion.update)}'`;
-                            if (itemVersion.updatedBy) command += `, '${JSON.stringify(itemVersion.updatedBy)}'`;
-                            if (itemVersion.usage) command += `, '${JSON.stringify(itemVersion.usage)}'`;
-                            if (itemVersion.videos) command += `, '${JSON.stringify(itemVersion.videos)}'`;*/
+                            
                             if (itemVersion.accumulatedAttachments) command += `, '${JSON.stringify(itemVersion.accumulatedAttachments)}'`;
                             if (itemVersion.accumulatedGalleryImages) command += `, '${JSON.stringify(itemVersion.accumulatedGalleryImages)}'`;
                             if (itemVersion.accumulatedS3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.accumulatedS3ObjectsInContent)}'`;
@@ -680,6 +637,26 @@ const setup = () => {
                 }
             });
         }
+        const getItemKeysForDownload = async (event, memberId) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                console.log("getItemKeysForDownload");
+                try {
+                    let response = await dbAll(db, `SELECT * FROM itemKeys WHERE memberId = ${memberId}  AND downloaded = 0 LIMIT 10`);
+                    if (response.status === "ok") {
+                        if (response.rows) {
+                            resolve({ status: "ok", keys: response.rows })
+                        } else {
+                            resolve({ status: "ok" })
+                        }
+                    } else {
+                        resolve({ status: "error", error: response.error })
+                    }
+                } catch (error) {
+                    resolve({ status: "error", error });
+                }
+            });
+        }
         const getLastItemKey = async (event, memberId) => {
             return new Promise(async (resolve, reject) => {
                 db = global.sqliteDB;
@@ -773,22 +750,6 @@ const setup = () => {
                             id: row.id,
                             version: row.version,
                         }
-                        /*
-                        if (row.container) item.container = JSON.parse(row.container);
-                        if (row.envelopeIV) item.envelopeIV = JSON.parse(row.envelopeIV);
-                        if (row.ivEnvelope) item.ivEnvelope = JSON.parse(row.ivEnvelope);
-                        if (row.ivEnvelopeIV) item.ivEnvelopeIV = JSON.parse(row.ivEnvelopeIV);
-                        if (row.keyEnvelope) item.keyEnvelope = JSON.parse(row.keyEnvelope);
-                        if (row.keyVersion) item.keyVersion = row.keyVersion;
-                        if (row.pageDate) item.pageDate = JSON.parse(row.pageDate);
-                        if (row.pageNumber) item.pageNumber = row.pageNumber;
-                        if (row.position) item.position = row.position;
-                        if (row.space) item.space = JSON.parse(row.space);
-                        if (row.tags) item.tags = JSON.parse(row.tags);
-                        if (row.tagsTokens) item.tagsTokens = JSON.parse(row.tagsTokens);
-                        if (row.title) item.title = JSON.parse(row.title);
-                        if (row.titleTokens) item.titleTokens = JSON.parse(row.titleTokens);
-                        if (row.type) item.type = JSON.parse(row.type);*/
                         if (row.container) item.container = row.container;
                         if (row.envelopeIV) item.envelopeIV = row.envelopeIV;
                         if (row.ivEnvelope) item.ivEnvelope = row.ivEnvelope;
@@ -827,6 +788,7 @@ const setup = () => {
         ipcMain.handle('getAMmberByAuthId', getAMmberByAuthId);
         ipcMain.handle('getAnItemForDownloadingObjects', getAnItemForDownloadingObjects);
         ipcMain.handle('getAnItemKeyForDwonload', getAnItemKeyForDwonload);
+        ipcMain.handle('getItemKeysForDownload', getItemKeysForDownload);
         ipcMain.handle('getLastItemKey', getLastItemKey);
         ipcMain.handle('getPageItem', getPageItem);
         ipcMain.handle('getS3Object', getS3Object);
@@ -850,13 +812,24 @@ const setup = () => {
 }
 
 app.whenReady().then(async () => {
+    const useRemoteServer = false; // Set to true to use the remote server for development
+    let port;
+    if (useRemoteServer) {
+        port = 3000;
+        createWindow(port);
+        setup();
+        app.on('activate', () => {
+            if (BrowserWindow.getAllWindows().length === 0) createWindow(port);
+        })
+        return;
+    }
     const server = http.createServer((request, response) => {
         // You pass two more arguments for config and middleware
         // More details here: https://github.com/vercel/serve-handler#options
         return handler(request, response, { public: 'out' });
     });
 
-    let port = 5200;
+    port = 5200;
     let serverStarted = false;
     const startServer = (server, port) => {
         return new Promise((resolve, reject) => {
@@ -889,10 +862,10 @@ app.whenReady().then(async () => {
     while (port < 5300) {
         const response = await startServer(server, port);
         if (response.status === "ok") {
-            createWindow();
+            createWindow(port);
             setup();
             app.on('activate', () => {
-                if (BrowserWindow.getAllWindows().length === 0) createWindow();
+                if (BrowserWindow.getAllWindows().length === 0) createWindow(port);
             })
             break;
         } else {

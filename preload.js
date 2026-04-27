@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   getAMmberByAuthId: (authId) => ipcRenderer.invoke('getAMmberByAuthId', authId),
   getAnItemForDownloadingObjects: (workspace)=> ipcRenderer.invoke('getAnItemForDownloadingObjects', workspace),
   getAnItemKeyForDwonload: (memberId)=> ipcRenderer.invoke('getAnItemKeyForDwonload', memberId),
+  getItemKeysForDownload: (memberId) => ipcRenderer.invoke('getItemKeysForDownload', memberId),
   getLastItemKey: (memberId) => ipcRenderer.invoke('getLastItemKey', memberId),
   getPageItem: (payload) => ipcRenderer.invoke('getPageItem', payload),
   getS3Object: (s3Key) => ipcRenderer.invoke('getS3Object', s3Key),
