@@ -7,13 +7,10 @@ const http = require('http');
 
 
 const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
-const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted } = require("./s3Helper.js");
-const { get } = require('node:http');
-const { it } = require('node:test');
-const { stat } = require('node:fs');
+const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted, dataFolder } = require("./s3Helper.js");
 
-var s3ObjectFolderPath = __dirname + '/s3Objects/';
-var databaseFile = 'BSafes.db';
+var dataFolderPath = path.join(__dirname, dataFolder);
+var databaseFile =  path.join(dataFolderPath, 'BSafes.db');
 
 const createWindow = async (port) => {
     const win = new BrowserWindow({
@@ -126,13 +123,12 @@ const parseItemVersion = (row) => {
 
 const setup = () => {
     const setupDB = () => {
-        let joinedDbFile = path.join(__dirname, databaseFile);
-        fs.access(joinedDbFile, fs.F_OK, (err) => {
+        fs.access(databaseFile, fs.F_OK, (err) => {
             if (err) {
-                fs.closeSync(fs.openSync(joinedDbFile, 'w'));
+                fs.closeSync(fs.openSync(databaseFile, 'w'));
             }
             //file exists
-            let db = new sqlite3.Database(joinedDbFile, async (err) => {
+            let db = new sqlite3.Database(databaseFile, async (err) => {
                 if (err) {
                     return console.error(err.message);
                 }
@@ -233,7 +229,8 @@ const setup = () => {
                         "privateKeyEnvelope TEXT, " +
                         "searchKeyEnvelope TEXT, " +
                         "searchIVEnvelope TEXT, " +
-                        "publicKey TEXT " +
+                        "publicKey TEXT, " +
+                        "lastUpdatedTime INTEGER" +
                         "); ";
                     response = await dbRun(db, command);
                     console.log("CREATE TABLE IF NOT EXISTS members: ", response);
@@ -253,7 +250,7 @@ const setup = () => {
                 console.log("addAMember");
                 let response = await dbGet(db, `SELECT * FROM members WHERE authId="${authId}"`);
                 if (response.status === "ok" && !response.row) {
-                    let command = `INSERT INTO members (authId, memberId, currentKeyVersion, displayName, privateKeyEnvelope, searchKeyEnvelope, searchIVEnvelope, publicKey) VALUES ("${authId}", "${member.memberId}", "${member.currentKeyVersion}", "${member.displayName}", '${member.privateKeyEnvelope}', '${member.searchKeyEnvelope}', '${member.searchIVEnvelope}', '${member.publicKey}');`
+                    let command = `INSERT INTO members (authId, memberId, currentKeyVersion, displayName, privateKeyEnvelope, searchKeyEnvelope, searchIVEnvelope, publicKey, lastUpdatedTime) VALUES ("${authId}", "${member.memberId}", "${member.currentKeyVersion}", "${member.displayName}", '${member.privateKeyEnvelope}', '${member.searchKeyEnvelope}', '${member.searchIVEnvelope}', '${member.publicKey}', ${member.lastUpdatedTime});`
                     response = await dbRun(db, command);
                     resolve(response);
                 } else {
@@ -796,23 +793,23 @@ const setup = () => {
         ipcMain.handle('listItems', listItems);
         ipcMain.handle('putS3Object', putS3Object);
     }
-    const setupS3 = () => {
+    const setupLocalBackupDataFolder = () => {
         try {
-            if (!fs.existsSync(s3ObjectFolderPath)) {
-                fs.mkdirSync(s3ObjectFolderPath);
+            if (!fs.existsSync(dataFolderPath)) {
+                fs.mkdirSync(dataFolderPath);
             }
         } catch (error) {
-            console.log("Could not open s3Object folder.");
+            console.log("Could not open local backup data folder.");
             return;
         }
     }
+    setupLocalBackupDataFolder();
     const db = setupDB();
-    setupDesktopAPIs(db);
-    setupS3();
+    setupDesktopAPIs(db); 
 }
 
 app.whenReady().then(async () => {
-    const useRemoteServer = false; // Set to true to use the remote server for development
+    const useRemoteServer = true; // Set to true to use the remote server for development
     let port;
     if (useRemoteServer) {
         port = 3000;
