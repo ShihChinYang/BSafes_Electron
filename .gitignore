@@ -141,5 +141,4 @@ vite.config.ts.timestamp-*
 .vite/
 
 # db & s3Objects 
-BSafes.db
-s3Objects/
+localBackupData/
