@@ -7,9 +7,8 @@ const http = require('http');
 
 
 const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
-const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted, dataFolder } = require("./s3Helper.js");
+const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted, dataFolderPath } = require("./s3Helper.js");
 
-var dataFolderPath = path.join(__dirname, dataFolder);
 var databaseFile = path.join(dataFolderPath, 'BSafes.db');
 
 const createWindow = async (port) => {

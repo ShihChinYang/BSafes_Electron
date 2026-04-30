@@ -1,11 +1,13 @@
+const { app } = require('electron')
 const fs = require('fs');
 const path = require('node:path');
 
 var dataFolder = 'localBackupData';
-var s3ObjectFolderPath = path.join(__dirname, dataFolder); 
+var dataFolderPath = path.join(app.getPath('userData'), dataFolder); 
+var s3ObjectFolderPath = dataFolderPath;
 
 const s3Helper = {
-    dataFolder: dataFolder,
+    dataFolderPath: dataFolderPath,
     fsPutS3Object: (s3Key, data) => {
         return new Promise(async (resolve) => {
             const filePath = path.join(s3ObjectFolderPath, s3Key);
