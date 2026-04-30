@@ -819,7 +819,7 @@ const setup = () => {
 }
 
 app.whenReady().then(async () => {
-    const useRemoteServer = true; // Set to true to use the remote server for development
+    const useRemoteServer = false; // Set to true to use the remote server for development
     let port;
     if (useRemoteServer) {
         port = 3000;
@@ -833,7 +833,7 @@ app.whenReady().then(async () => {
     const server = http.createServer((request, response) => {
         // You pass two more arguments for config and middleware
         // More details here: https://github.com/vercel/serve-handler#options
-        return handler(request, response, { public: 'out' });
+        return handler(request, response, { public: path.join(__dirname, 'webAsset')});
     });
 
     port = 5200;
@@ -844,7 +844,7 @@ app.whenReady().then(async () => {
                 server.listen(port);
 
                 server.on('listening', () => {
-                    if (!serverStarted) {
+                    if (true) {
                         console.log(`Server successfully running on port: ${server.address().port}`);
                         serverStarted = true;
                         resolve({ status: "ok" });
@@ -885,6 +885,7 @@ app.whenReady().then(async () => {
             }
         }
     }
+
     if (!serverStarted) {
         console.error("Failed to start the server on any available port.");
         dialog.showErrorBox('Main Process Error', 'Failed to start the server on any available port. Please make sure ports 5200-5299 are available and restart the application.');

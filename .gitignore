@@ -142,3 +142,4 @@ vite.config.ts.timestamp-*
 
 # db & s3Objects 
 localBackupData/
+webAsset
