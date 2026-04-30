@@ -10,7 +10,7 @@ const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
 const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted, dataFolder } = require("./s3Helper.js");
 
 var dataFolderPath = path.join(__dirname, dataFolder);
-var databaseFile =  path.join(dataFolderPath, 'BSafes.db');
+var databaseFile = path.join(dataFolderPath, 'BSafes.db');
 
 const createWindow = async (port) => {
     const win = new BrowserWindow({
@@ -391,7 +391,7 @@ const setup = () => {
 
                             command += ") VALUES (";
                             command += `'${itemVersion.id}', ${itemVersion.version}, 0`;
-                            
+
                             if (itemVersion.accumulatedAttachments) command += `, '${JSON.stringify(itemVersion.accumulatedAttachments)}'`;
                             if (itemVersion.accumulatedGalleryImages) command += `, '${JSON.stringify(itemVersion.accumulatedGalleryImages)}'`;
                             if (itemVersion.accumulatedS3ObjectsInContent) command += `, '${JSON.stringify(itemVersion.accumulatedS3ObjectsInContent)}'`;
@@ -776,6 +776,15 @@ const setup = () => {
                 resolve(response);
             });
         }
+        const updateMemberLastUpdatedTime = async (evemt, authId, lastUpdatedTime) => {
+            return new Promise(async (resolve, reject) => {
+                db = global.sqliteDB;
+                console.log("updateMemberLastUpdatedTime");
+                let command = `UPDATE members SET lastUpdatedTime=${lastUpdatedTime} WHERE authId="${authId}";`
+                response = await dbRun(db, command);
+                resolve(response);
+            });
+        }
         ipcMain.handle('ping', () => 'pong');
         ipcMain.handle('addAMemberIfNotExists', addAMemberIfNotExists);
         ipcMain.handle('addAnItemVersion', addAnItemVersion);
@@ -792,6 +801,7 @@ const setup = () => {
         ipcMain.handle('isS3ObjectExisted', isS3ObjectExisted);
         ipcMain.handle('listItems', listItems);
         ipcMain.handle('putS3Object', putS3Object);
+        ipcMain.handle('updateMemberLastUpdatedTime', updateMemberLastUpdatedTime);
     }
     const setupLocalBackupDataFolder = () => {
         try {
@@ -805,7 +815,7 @@ const setup = () => {
     }
     setupLocalBackupDataFolder();
     const db = setupDB();
-    setupDesktopAPIs(db); 
+    setupDesktopAPIs(db);
 }
 
 app.whenReady().then(async () => {

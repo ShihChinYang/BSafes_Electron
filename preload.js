@@ -21,4 +21,5 @@ contextBridge.exposeInMainWorld('desktopAPI', {
   isS3ObjectExisted: (s3Key) => ipcRenderer.invoke('isS3ObjectExisted', s3Key),
   listItems: (body) => ipcRenderer.invoke('listItems', body),
   putS3Object: (s3Key, data) => ipcRenderer.invoke('putS3Object', s3Key, data),
+  updateMemberLastUpdatedTime: (authId, lastUpdatedTime) => ipcRenderer.invoke('updateMemberLastUpdatedTime', authId, lastUpdatedTime),
 })
