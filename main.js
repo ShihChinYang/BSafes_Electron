@@ -8,6 +8,7 @@ const http = require('http');
 
 const { dbAll, dbGet, dbRun } = require("./dbHelper.js")
 const { fsGetS3Object, fsPutS3Object, fsIsS3ObjectExisted, dataFolderPath } = require("./s3Helper.js");
+const { registerExportFolderHandlers } = require("./exportFolder.js");
 
 var databaseFile = path.join(dataFolderPath, 'BSafes.db');
 
@@ -801,6 +802,7 @@ const setup = () => {
         ipcMain.handle('listItems', listItems);
         ipcMain.handle('putS3Object', putS3Object);
         ipcMain.handle('updateMemberLastUpdatedTime', updateMemberLastUpdatedTime);
+        registerExportFolderHandlers();
     }
     const setupLocalBackupDataFolder = () => {
         try {
@@ -818,7 +820,7 @@ const setup = () => {
 }
 
 app.whenReady().then(async () => {
-    const useRemoteServer = false; // Set to true to use the remote server for development
+    const useRemoteServer = true; // Set to true to use the remote server for development
     let port;
     if (useRemoteServer) {
         port = 3000;
